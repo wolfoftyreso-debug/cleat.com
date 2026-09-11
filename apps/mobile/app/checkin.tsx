@@ -24,6 +24,8 @@ function Scale({
           <TouchableOpacity
             key={option}
             style={[styles.chip, value === option ? styles.chipSelected : null]}
+            accessibilityRole="button"
+            accessibilityState={{ selected: value === option }}
             onPress={() => onChange(option)}
           >
             <Text style={[styles.chipText, value === option ? styles.chipTextSelected : null]}>
@@ -79,7 +81,7 @@ export default function CheckInScreen() {
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <Text style={styles.h1}>
+      <Text style={styles.h1} accessibilityRole="header">
         {t(kind === 'morning' ? 'checkin.morning.title' : 'checkin.evening.title')}
       </Text>
 
@@ -88,6 +90,8 @@ export default function CheckInScreen() {
           <TouchableOpacity
             key={option}
             style={[styles.chip, kind === option ? styles.chipSelected : null]}
+            accessibilityRole="button"
+            accessibilityState={{ selected: kind === option }}
             onPress={() => setKind(option)}
           >
             <Text style={[styles.chipText, kind === option ? styles.chipTextSelected : null]}>

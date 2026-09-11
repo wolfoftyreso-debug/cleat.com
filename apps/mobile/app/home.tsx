@@ -59,7 +59,7 @@ export default function HomeScreen() {
 
       {data?.streak ? (
         <View>
-          <Text style={styles.h2}>{t('common.day').toUpperCase()}</Text>
+          <Text style={styles.h2} accessibilityRole="header">{t('common.day').toUpperCase()}</Text>
           <Text style={styles.dayCount}>{data.streak.currentDays}</Text>
           {data.streak.isPersonalRecord ? (
             <Text style={[styles.muted, { marginTop: 6 }]}>{t('home.personalRecord')}</Text>
@@ -70,7 +70,7 @@ export default function HomeScreen() {
         </View>
       ) : (
         <View style={[styles.card, styles.cardAccent]}>
-          <Text style={styles.h3}>{t('home.noPlanTitle')}</Text>
+          <Text style={styles.h3} accessibilityRole="header">{t('home.noPlanTitle')}</Text>
           <Text style={styles.body}>{t('home.noPlanBody')}</Text>
         </View>
       )}
@@ -91,7 +91,7 @@ export default function HomeScreen() {
       {/* The five modes, acute ones first and largest. Same spine as the web
           client so a person moving between phone and browser is not relearning
           the product. */}
-      <Text style={styles.h2}>{t('home.quickActions').toUpperCase()}</Text>
+      <Text style={styles.h2} accessibilityRole="header">{t('home.quickActions').toUpperCase()}</Text>
 
       <TouchableOpacity
         style={[styles.action, styles.actionPrimary]}
@@ -171,7 +171,7 @@ export default function HomeScreen() {
 
       {data?.reclaimed ? (
         <>
-          <Text style={styles.h2}>{t('reclaimed.moneyTitle').toUpperCase()}</Text>
+          <Text style={styles.h2} accessibilityRole="header">{t('reclaimed.moneyTitle').toUpperCase()}</Text>
           <View style={styles.statGrid}>
             <View style={styles.stat}>
               <Text style={styles.statValue}>
@@ -194,7 +194,7 @@ export default function HomeScreen() {
 
       {data?.milestones?.next ? (
         <>
-          <Text style={styles.h2}>{t('milestone.nextTitle').toUpperCase()}</Text>
+          <Text style={styles.h2} accessibilityRole="header">{t('milestone.nextTitle').toUpperCase()}</Text>
           <View style={styles.card}>
             <Text style={styles.lede}>{data.milestones.next.text}</Text>
             {data.milestones.next.source ? (
@@ -208,7 +208,7 @@ export default function HomeScreen() {
 
       {data?.insights?.length ? (
         <>
-          <Text style={styles.h2}>{t('insight.title').toUpperCase()}</Text>
+          <Text style={styles.h2} accessibilityRole="header">{t('insight.title').toUpperCase()}</Text>
           {data.insights.slice(0, 2).map((insight) => (
             <View style={styles.card} key={insight.id}>
               <Text style={styles.lede}>{insight.text}</Text>

@@ -83,7 +83,7 @@ export default function TriggersScreen() {
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <Text style={styles.h1}>{t('trigger.title')}</Text>
+      <Text style={styles.h1} accessibilityRole="header">{t('trigger.title')}</Text>
       {error ? (
         <View style={styles.errorBanner}>
           <Text style={styles.errorText}>{error}</Text>
@@ -95,7 +95,7 @@ export default function TriggersScreen() {
         view.triggers.map((trigger) => (
           <View style={styles.card} key={trigger.id}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 12 }}>
-              <Text style={[styles.h3, { flexShrink: 1 }]}>{trigger.label}</Text>
+              <Text style={[styles.h3, { flexShrink: 1 }]} accessibilityRole="header">{trigger.label}</Text>
               <TouchableOpacity onPress={() => void remove(trigger.id)} disabled={busy}>
                 <Text style={styles.muted}>{t('action.delete')}</Text>
               </TouchableOpacity>
@@ -118,7 +118,7 @@ export default function TriggersScreen() {
         <Text style={styles.muted}>{t('trigger.empty')}</Text>
       )}
 
-      <Text style={styles.h2}>{t('trigger.add').toUpperCase()}</Text>
+      <Text style={styles.h2} accessibilityRole="header">{t('trigger.add').toUpperCase()}</Text>
       <View style={styles.card}>
         <Text style={styles.label}>{t('trigger.label')}</Text>
         <TextInput

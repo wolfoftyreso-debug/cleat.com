@@ -86,7 +86,7 @@ export default function SupporterTalkScreen() {
       >
         {messages.length === 0 ? (
           <>
-            <Text style={styles.h1}>{t('near.talkTitle')}</Text>
+            <Text style={styles.h1} accessibilityRole="header">{t('near.talkTitle')}</Text>
             <Text style={styles.lede}>{t('near.talkGreeting')}</Text>
             <Text style={styles.muted}>{t('near.talkNotAboutThem')}</Text>
             <Text style={styles.muted}>{t('near.talkNoAdviceOnLeaving')}</Text>
@@ -106,10 +106,19 @@ export default function SupporterTalkScreen() {
             </View>
             {bubble.resources?.length ? (
               <View style={[styles.card, styles.cardWarning]}>
-                <Text style={styles.h3}>{t('safety.resourcesTitle')}</Text>
+                <Text style={styles.h3} accessibilityRole="header">{t('safety.resourcesTitle')}</Text>
                 {bubble.resources.map((resource) => (
                   <TouchableOpacity
                     key={resource.key}
+                    accessibilityRole="button"
+                    accessibilityLabel={
+                      resource.contact
+                        ? t('action.callNumber', {
+                            name: resource.label,
+                            number: resource.contact,
+                          })
+                        : resource.label
+                    }
                     onPress={() => {
                       if (!resource.contact) return;
                       void Linking.openURL(

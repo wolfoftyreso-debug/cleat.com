@@ -124,7 +124,7 @@ export default function SettingsScreen() {
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <Text style={styles.h1}>{t('settings.title')}</Text>
+      <Text style={styles.h1} accessibilityRole="header">{t('settings.title')}</Text>
 
       {message ? (
         <View style={styles.card}>
@@ -137,12 +137,14 @@ export default function SettingsScreen() {
         </View>
       ) : null}
 
-      <Text style={styles.h2}>{t('settings.language').toUpperCase()}</Text>
+      <Text style={styles.h2} accessibilityRole="header">{t('settings.language').toUpperCase()}</Text>
       <View style={styles.row}>
         {(['sv', 'en'] as const).map((code) => (
           <TouchableOpacity
             key={code}
             style={[styles.chip, user.locale === code ? styles.chipSelected : null]}
+            accessibilityRole="button"
+            accessibilityState={{ selected: user.locale === code }}
             onPress={() => void setLocale(code)}
           >
             <Text
@@ -154,12 +156,14 @@ export default function SettingsScreen() {
         ))}
       </View>
 
-      <Text style={styles.h2}>{t('settings.country').toUpperCase()}</Text>
+      <Text style={styles.h2} accessibilityRole="header">{t('settings.country').toUpperCase()}</Text>
       <View style={styles.row}>
         {['SE', 'US', 'GB'].map((code) => (
           <TouchableOpacity
             key={code}
             style={[styles.chip, user.country === code ? styles.chipSelected : null]}
+            accessibilityRole="button"
+            accessibilityState={{ selected: user.country === code }}
             onPress={() => void setCountry(code)}
           >
             <Text
@@ -173,7 +177,7 @@ export default function SettingsScreen() {
 
       <TwoFactor />
 
-      <Text style={styles.h2}>{t('privacy.title').toUpperCase()}</Text>
+      <Text style={styles.h2} accessibilityRole="header">{t('privacy.title').toUpperCase()}</Text>
       <View style={styles.card}>
         <Text style={styles.body}>{t('privacy.principles')}</Text>
         <TouchableOpacity style={styles.button} onPress={() => void exportData()} disabled={busy}>
@@ -186,7 +190,7 @@ export default function SettingsScreen() {
           never sell your data" keeps saying so in a deployment that does. */}
       {summary ? (
         <>
-          <Text style={styles.h2}>{t('privacy.storedTitle').toUpperCase()}</Text>
+          <Text style={styles.h2} accessibilityRole="header">{t('privacy.storedTitle').toUpperCase()}</Text>
           <View style={styles.card}>
             {summary.whatWeStore.map((row) => (
               <View
@@ -201,7 +205,7 @@ export default function SettingsScreen() {
             ))}
           </View>
 
-          <Text style={styles.h2}>{t('privacy.sharingTitle').toUpperCase()}</Text>
+          <Text style={styles.h2} accessibilityRole="header">{t('privacy.sharingTitle').toUpperCase()}</Text>
           <View style={styles.card}>
             {(Object.keys(summary.sharing) as (keyof PrivacySummary['sharing'])[]).map((key) => (
               <View
@@ -221,7 +225,7 @@ export default function SettingsScreen() {
       {/* Deletion is a first-class control, not a support ticket. Recovery data
           in the wrong hands costs people jobs and custody. */}
       <View style={[styles.card, styles.cardWarning]}>
-        <Text style={styles.h3}>{t('privacy.delete')}</Text>
+        <Text style={styles.h3} accessibilityRole="header">{t('privacy.delete')}</Text>
         <Text style={styles.body}>{t('privacy.deleteConfirm')}</Text>
         <TextInput
           style={styles.input}

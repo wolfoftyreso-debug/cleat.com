@@ -86,10 +86,19 @@ export default function CoachScreen() {
 
             {bubble.resources?.length ? (
               <View style={[styles.card, styles.cardWarning]}>
-                <Text style={styles.h3}>{t('safety.resourcesTitle')}</Text>
+                <Text style={styles.h3} accessibilityRole="header">{t('safety.resourcesTitle')}</Text>
                 {bubble.resources.map((resource) => (
                   <TouchableOpacity
                     key={resource.key}
+                    accessibilityRole="button"
+                    accessibilityLabel={
+                      resource.contact
+                        ? t('action.callNumber', {
+                            name: resource.label,
+                            number: resource.contact,
+                          })
+                        : resource.label
+                    }
                     onPress={() =>
                       resource.contact
                         ? void Linking.openURL(`tel:${resource.contact.replace(/\s/g, '')}`)

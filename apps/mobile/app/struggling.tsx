@@ -68,12 +68,12 @@ export default function StrugglingScreen() {
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <Text style={styles.h1}>{t('mode.now')}</Text>
+      <Text style={styles.h1} accessibilityRole="header">{t('mode.now')}</Text>
       <Text style={styles.lede}>{t('now.intro')}</Text>
 
       {!state ? (
         <>
-          <Text style={styles.h2}>{t('now.whatIsHappening').toUpperCase()}</Text>
+          <Text style={styles.h2} accessibilityRole="header">{t('now.whatIsHappening').toUpperCase()}</Text>
           <View style={styles.row}>
             {STATES.map((option) => (
               <TouchableOpacity key={option} style={styles.chip} onPress={() => void pick(option)}>
@@ -96,10 +96,11 @@ export default function StrugglingScreen() {
         <>
           {/* The three cheapest things that work, always in the same order, so
               they become muscle memory rather than a menu to evaluate. */}
-          <Text style={styles.h2}>{t('now.cheapest').toUpperCase()}</Text>
+          <Text style={styles.h2} accessibilityRole="header">{t('now.cheapest').toUpperCase()}</Text>
           {primaryContact?.phone ? (
             <TouchableOpacity
               style={[styles.button, styles.buttonPrimary]}
+              accessibilityRole="button"
               onPress={() => {
                 void Linking.openURL(
                   `tel:${primaryContact.phone?.replace(/\s/g, '') ?? ''}`,
@@ -107,7 +108,7 @@ export default function StrugglingScreen() {
               }}
             >
               <Text style={[styles.buttonText, styles.buttonTextPrimary]}>
-                {t('action.call')} {primaryContact.name}
+                {t('action.callName', { name: primaryContact.name })}
               </Text>
             </TouchableOpacity>
           ) : (
@@ -124,7 +125,7 @@ export default function StrugglingScreen() {
 
           {data?.profile.whyStatement ? (
             <>
-              <Text style={styles.h2}>{t('why.title').toUpperCase()}</Text>
+              <Text style={styles.h2} accessibilityRole="header">{t('why.title').toUpperCase()}</Text>
               <View style={styles.card}>
                 <Text style={styles.lede}>{data.profile.whyStatement}</Text>
               </View>
@@ -135,7 +136,7 @@ export default function StrugglingScreen() {
               evidence, not generic advice. */}
           {data?.insights.length ? (
             <>
-              <Text style={styles.h2}>{t('insight.title').toUpperCase()}</Text>
+              <Text style={styles.h2} accessibilityRole="header">{t('insight.title').toUpperCase()}</Text>
               {data.insights.slice(0, 2).map((insight) => (
                 <View style={styles.card} key={insight.id}>
                   <Text style={styles.body}>{insight.text}</Text>

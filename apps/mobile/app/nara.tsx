@@ -9,7 +9,7 @@ import {
   SUPPORTER_TOPICS,
   type SupporterAnswer,
 } from '@cleat/core';
-import { translate, type Locale } from '@cleat/i18n';
+import { translator, type Locale } from '@cleat/i18n';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Linking, ScrollView, Text, TouchableOpacity, View } from 'react-native';
@@ -34,7 +34,7 @@ export default function SupporterScreen() {
   const router = useRouter();
   const locale: Locale = user?.locale ?? 'sv';
   const country = user?.country ?? 'SE';
-  const t = (key: string) => translate(locale, key);
+  const t = translator(locale);
 
   const [answers, setAnswers] = useState<Record<string, SupporterAnswer>>({});
   const reflection = reflectOnSupport(answers);
@@ -45,14 +45,14 @@ export default function SupporterScreen() {
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <Text style={styles.h1}>{t('near.title')}</Text>
+      <Text style={styles.h1} accessibilityRole="header">{t('near.title')}</Text>
       <Text style={styles.lede}>{t('near.tagline')}</Text>
       <Text style={styles.body}>{t('near.intro')}</Text>
 
       {/* First, before anything reflective. Somebody opening this at two in the
           morning with a person unconscious in the next room must not scroll
           past a self-assessment to reach it. */}
-      <Text style={styles.h2}>{t('near.emergencyTitle').toUpperCase()}</Text>
+      <Text style={styles.h2} accessibilityRole="header">{t('near.emergencyTitle').toUpperCase()}</Text>
       <View style={[styles.card, styles.cardWarning]}>
         <Text style={styles.body}>{t('near.emergencyLede')}</Text>
         {SUPPORTER_EMERGENCY_SIGNS.map((sign) => (
@@ -65,7 +65,15 @@ export default function SupporterScreen() {
           {emergencyResources(country, 'emergency')
             .filter((resource) => resource.contact)
             .map((resource) => (
-              <TouchableOpacity key={resource.key} onPress={() => call(resource.contact)}>
+              <TouchableOpacity
+                key={resource.key}
+                accessibilityRole="button"
+                accessibilityLabel={t('action.callNumber', {
+                  name: t(resource.key),
+                  number: resource.contact,
+                })}
+                onPress={() => call(resource.contact)}
+              >
                 <Text style={{ color: colors.accent, fontSize: 22, fontWeight: '800' }}>
                   {resource.contact}
                 </Text>
@@ -74,15 +82,15 @@ export default function SupporterScreen() {
         </View>
       </View>
 
-      <Text style={styles.h2}>{t('near.understandTitle').toUpperCase()}</Text>
+      <Text style={styles.h2} accessibilityRole="header">{t('near.understandTitle').toUpperCase()}</Text>
       {SUPPORTER_TOPICS.map((topic) => (
         <View style={styles.card} key={topic}>
-          <Text style={styles.h3}>{t(`near.topic.${topic}`)}</Text>
+          <Text style={styles.h3} accessibilityRole="header">{t(`near.topic.${topic}`)}</Text>
           <Text style={styles.body}>{t(`near.topic.${topic}.body`)}</Text>
         </View>
       ))}
 
-      <Text style={styles.h2}>{t('near.checkTitle').toUpperCase()}</Text>
+      <Text style={styles.h2} accessibilityRole="header">{t('near.checkTitle').toUpperCase()}</Text>
       <Text style={styles.body}>{t('near.checkLede')}</Text>
       <Text style={styles.muted}>{t('near.checkNotADiagnosis')}</Text>
 
@@ -96,6 +104,8 @@ export default function SupporterScreen() {
                 <TouchableOpacity
                   key={value}
                   style={[styles.chip, selected ? styles.chipSelected : null]}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: selected }}
                   onPress={() =>
                     setAnswers((current) => ({ ...current, [statement.id]: value }))
                   }
@@ -110,7 +120,7 @@ export default function SupporterScreen() {
         </View>
       ))}
 
-      <Text style={styles.h2}>{t('near.checkResult').toUpperCase()}</Text>
+      <Text style={styles.h2} accessibilityRole="header">{t('near.checkResult').toUpperCase()}</Text>
       {reflection.tooLittle ? (
         <Text style={styles.muted}>{t('near.checkTooLittle')}</Text>
       ) : reflection.loudest.length === 0 ? (
@@ -118,7 +128,7 @@ export default function SupporterScreen() {
       ) : (
         reflection.loudest.map((pattern) => (
           <View style={[styles.card, styles.cardAccent]} key={pattern}>
-            <Text style={styles.h3}>{t(`near.pattern.${pattern}`)}</Text>
+            <Text style={styles.h3} accessibilityRole="header">{t(`near.pattern.${pattern}`)}</Text>
             <Text style={styles.body}>{t(`near.pattern.${pattern}.body`)}</Text>
             <Text style={styles.lede}>{t(`near.pattern.${pattern}.step`)}</Text>
           </View>
@@ -130,22 +140,29 @@ export default function SupporterScreen() {
         </TouchableOpacity>
       ) : null}
 
-      <Text style={styles.h2}>{t('near.boundariesTitle').toUpperCase()}</Text>
+      <Text style={styles.h2} accessibilityRole="header">{t('near.boundariesTitle').toUpperCase()}</Text>
       <Text style={styles.body}>{t('near.boundariesLede')}</Text>
       {BOUNDARY_SITUATIONS.map((situation) => (
         <View style={styles.card} key={situation}>
-          <Text style={styles.h3}>{t(`near.boundary.${situation}`)}</Text>
+          <Text style={styles.h3} accessibilityRole="header">{t(`near.boundary.${situation}`)}</Text>
           <Text style={styles.body}>{t(`near.boundary.${situation}.say`)}</Text>
         </View>
       ))}
 
-      <Text style={styles.h2}>{t('near.resourcesTitle').toUpperCase()}</Text>
+      <Text style={styles.h2} accessibilityRole="header">{t('near.resourcesTitle').toUpperCase()}</Text>
       <View style={styles.card}>
         {supporterResources(country).map((resource) => (
           <View key={resource.key} style={{ marginBottom: 10 }}>
             <Text style={styles.body}>{t(resource.key)}</Text>
             {resource.contact ? (
-              <TouchableOpacity onPress={() => call(resource.contact)}>
+              <TouchableOpacity
+                accessibilityRole="button"
+                accessibilityLabel={t('action.callNumber', {
+                  name: t(resource.key),
+                  number: resource.contact,
+                })}
+                onPress={() => call(resource.contact)}
+              >
                 <Text style={{ color: colors.accent, fontSize: 20, fontWeight: '700' }}>
                   {resource.contact}
                 </Text>
@@ -156,7 +173,7 @@ export default function SupporterScreen() {
       </View>
       <Text style={styles.muted}>{t('near.noRequirement')}</Text>
 
-      <Text style={styles.h2}>{t('near.talkTitle').toUpperCase()}</Text>
+      <Text style={styles.h2} accessibilityRole="header">{t('near.talkTitle').toUpperCase()}</Text>
       <View style={styles.card}>
         <Text style={styles.body}>{t('near.talkLede')}</Text>
         <Text style={styles.muted}>{t('near.talkNoAdviceOnLeaving')}</Text>

@@ -40,6 +40,21 @@ export const en: Catalog = {
   'nav.settings': 'Settings',
   // Two unnamed navigation regions are both announced as "navigation".
   'nav.primaryLabel': 'Main navigation',
+  /*
+   * Short screen titles for the mobile navigation bar.
+   *
+   * Thirteen screens were called "Cleat". On iOS the title is the first thing
+   * read out and the thing the back button is named after, so every screen
+   * said "Cleat" and every back button said "Back to Cleat", wherever you
+   * actually were. The screens' own headings will not do here: "Okay. We'll
+   * take this together." does not fit in a navigation bar.
+   */
+  'nav.title.craving': 'The craving',
+  'nav.title.checkin': 'Check-in',
+  'nav.title.struggling': 'Right now',
+  'nav.title.crisis': 'Urgent help',
+  'nav.title.near': 'Cleat Nära',
+  'nav.title.nearTalk': 'Someone to think with',
   'action.back': 'Back',
   'action.next': 'Next',
   'action.skip': 'Skip',

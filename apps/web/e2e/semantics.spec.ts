@@ -87,7 +87,7 @@ test.describe('controls have names', () => {
     for (let i = 0; i < count; i += 1) {
       const slider = sliders.nth(i);
       const name = await slider.evaluate(
-        (el) => (el as HTMLElement).labels?.[0]?.textContent ?? el.getAttribute('aria-label') ?? '',
+        (el) => (el as HTMLInputElement).labels?.[0]?.textContent ?? el.getAttribute('aria-label') ?? '',
       );
       expect(name.trim().length, `slider ${i} has no accessible name`).toBeGreaterThan(0);
       // And the value carries its scale rather than being a naked number.

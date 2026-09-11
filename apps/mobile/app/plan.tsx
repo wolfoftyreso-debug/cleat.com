@@ -104,11 +104,11 @@ export default function PlanScreen() {
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <Text style={styles.h1}>{t('mode.path')}</Text>
+      <Text style={styles.h1} accessibilityRole="header">{t('mode.path')}</Text>
 
       {data?.phase ? (
         <View style={styles.card}>
-          <Text style={styles.h3}>{data.phase.label}</Text>
+          <Text style={styles.h3} accessibilityRole="header">{data.phase.label}</Text>
           <Text style={styles.body}>{data.phase.reason}</Text>
           <View style={styles.row}>
             {data.phase.focus.map((focus) => (
@@ -128,7 +128,7 @@ export default function PlanScreen() {
       */}
       {data?.quit ? null : (
         <>
-          <Text style={styles.h2}>{t('onboarding.pickSubstance').toUpperCase()}</Text>
+          <Text style={styles.h2} accessibilityRole="header">{t('onboarding.pickSubstance').toUpperCase()}</Text>
           <View style={styles.card}>
             <View style={styles.row}>
               {SUBSTANCES.map((option) => (
@@ -139,6 +139,8 @@ export default function PlanScreen() {
                     setPurchaseSize(String(substanceProfile(option).costBasis.unitsPerPurchase));
                   }}
                   style={[styles.chip, option === substance ? styles.chipSelected : null]}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: option === substance }}
                 >
                   <Text style={styles.chipText}>{t(`substance.${option}`)}</Text>
                 </TouchableOpacity>
@@ -203,6 +205,8 @@ export default function PlanScreen() {
                         setPurchaseSize(String(costBasisFor(substance, next).unitsPerPurchase));
                       }}
                       style={[styles.chip, intakeForm === option ? styles.chipSelected : null]}
+                      accessibilityRole="button"
+                      accessibilityState={{ selected: intakeForm === option }}
                     >
                       <Text style={styles.chipText}>{t(`intake.${option}`)}</Text>
                     </TouchableOpacity>
@@ -236,7 +240,7 @@ export default function PlanScreen() {
         </View>
       ) : null}
 
-      <Text style={styles.h2}>{t('why.title').toUpperCase()}</Text>
+      <Text style={styles.h2} accessibilityRole="header">{t('why.title').toUpperCase()}</Text>
       <View style={styles.card}>
         <Text style={styles.muted}>{t('why.questions.cost')}</Text>
         <Text style={styles.muted}>{t('why.questions.who')}</Text>
@@ -259,12 +263,18 @@ export default function PlanScreen() {
         </TouchableOpacity>
       </View>
 
-      <Text style={styles.h2}>{t('support.title').toUpperCase()}</Text>
+      <Text style={styles.h2} accessibilityRole="header">{t('support.title').toUpperCase()}</Text>
       {data?.supportContacts.length ? (
         <View style={styles.card}>
           {data.supportContacts.map((contact) => (
             <TouchableOpacity
               key={contact.id}
+              accessibilityRole="button"
+              accessibilityLabel={
+                contact.phone
+                  ? t('action.callNumber', { name: contact.name, number: contact.phone })
+                  : contact.name
+              }
               onPress={() =>
                 contact.phone
                   ? void Linking.openURL(`tel:${contact.phone.replace(/\s/g, '')}`)
@@ -272,7 +282,7 @@ export default function PlanScreen() {
               }
             >
               <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                <Text style={styles.h3}>{contact.name}</Text>
+                <Text style={styles.h3} accessibilityRole="header">{contact.name}</Text>
                 {contact.phone ? <Text style={styles.muted}>{t('action.call')}</Text> : null}
               </View>
             </TouchableOpacity>

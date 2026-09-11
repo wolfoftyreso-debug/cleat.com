@@ -48,6 +48,21 @@ export const sv = {
   'nav.settings': 'Inställningar',
   // Två navigationsregioner utan namn läses upp som "navigation" två gånger.
   'nav.primaryLabel': 'Huvudnavigering',
+  /*
+   * Korta skärmtitlar för mobilens navigeringsfält.
+   *
+   * Tretton skärmar hette "Cleat". På iOS är titeln det första som läses upp
+   * och det som tillbaka-knappen heter, så varje skärm sa "Cleat" och varje
+   * tillbaka-knapp sa "Tillbaka till Cleat" — oavsett var man faktiskt var.
+   * De långa rubrikerna på skärmarna duger inte här: "Okej. Vi tar det här
+   * tillsammans." får inte plats i ett navigeringsfält.
+   */
+  'nav.title.craving': 'Suget',
+  'nav.title.checkin': 'Incheckning',
+  'nav.title.struggling': 'Just nu',
+  'nav.title.crisis': 'Akut hjälp',
+  'nav.title.near': 'Cleat Nära',
+  'nav.title.nearTalk': 'Bollplank',
   'action.back': 'Tillbaka',
   'action.next': 'Nästa',
   'action.skip': 'Hoppa över',

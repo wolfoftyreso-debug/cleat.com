@@ -106,7 +106,7 @@ export default function SignInScreen() {
         contentContainerStyle={[styles.content, { paddingTop: 70 }]}
       >
         <Text style={styles.wordmark}>{t('app.name').toUpperCase()}</Text>
-        <Text style={styles.h1}>{t('auth.totpTitle')}</Text>
+        <Text style={styles.h1} accessibilityRole="header">{t('auth.totpTitle')}</Text>
         <Text style={styles.lede}>{t('auth.totpPrompt')}</Text>
 
         <View style={[styles.card, { marginTop: 24 }]}>
@@ -160,7 +160,7 @@ export default function SignInScreen() {
   return (
     <ScrollView style={styles.screen} contentContainerStyle={[styles.content, { paddingTop: 70 }]}>
       <Text style={styles.wordmark}>{t('app.name').toUpperCase()}</Text>
-      <Text style={styles.h1}>{t('app.tagline')}</Text>
+      <Text style={styles.h1} accessibilityRole="header">{t('app.tagline')}</Text>
       <Text style={styles.lede}>{t('app.subtitle')}</Text>
 
       <View style={[styles.card, { marginTop: 24 }]}>

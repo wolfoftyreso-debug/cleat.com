@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
-import { Linking, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { AccessibilityInfo, Linking, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { CRAVING_FEELINGS, CRAVING_LOCATIONS } from '@cleat/core';
 import { api, type CoachResponse, type CravingPlan } from '../src/api';
 import { offlineCravingPlan, offlineEmergency } from '../src/offline';
@@ -18,6 +18,9 @@ const FEELINGS = CRAVING_FEELINGS;
 const LOCATIONS = CRAVING_LOCATIONS;
 
 const INTENSITIES = [2, 4, 6, 8, 10] as const;
+
+/** The questions, in order. The plan and emergency steps are not questions. */
+const QUESTION_STEPS = ['safety', 'feeling', 'location', 'intensity'] as const;
 
 type Step = 'safety' | 'feeling' | 'location' | 'intensity' | 'plan' | 'emergency';
 
@@ -40,8 +43,36 @@ export default function CravingScreen() {
   const [busy, setBusy] = useState(false);
   const [logNote, setLogNote] = useState<string | null>(null);
 
+  const stepIndex = (QUESTION_STEPS as readonly string[]).indexOf(step);
+
+  /*
+   * Say the new question out loud when the step changes.
+   *
+   * There is no page load here and nothing takes focus: the screen's contents
+   * are replaced in place, so VoiceOver keeps reading whatever it was on and
+   * the new question is never announced. On the web the equivalent is moving
+   * focus to the heading; on a phone it is this.
+   */
+  const firstStep = useRef(true);
+  useEffect(() => {
+    if (firstStep.current) {
+      firstStep.current = false;
+      return;
+    }
+    if (stepIndex < 0) return;
+    AccessibilityInfo.announceForAccessibility(
+      `${t('craving.step.progress', { step: stepIndex + 1, total: QUESTION_STEPS.length })}. ${t(
+        `craving.step.${step}`,
+      )}`,
+    );
+  }, [step, stepIndex, t]);
+
   async function logOutcome(outcome: 'resisted' | 'used') {
-    setLogNote(null);
+    // Acknowledged either way, and the same one line for both: "I used" is a
+    // log entry, not a verdict. Success used to be silent — the note existed
+    // only for the failure case, so the button at the end of a craving did
+    // nothing visible when it worked.
+    setLogNote(t('craving.logged'));
     try {
       await api.post('/v1/cravings', { intensity, feeling, location, outcome });
     } catch {
@@ -50,6 +81,22 @@ export default function CravingScreen() {
       // thing is to say the log did not save rather than to imply it did.
       setLogNote(t('offline.notLogged'));
     }
+  }
+
+  /** The way back one question, so a mis-tap is not final. */
+  function StepBack({ to }: { to: Step }) {
+    return (
+      <TouchableOpacity
+        style={styles.button}
+        accessibilityRole="button"
+        onPress={() => {
+          setLogNote(null);
+          setStep(to);
+        }}
+      >
+        <Text style={styles.buttonText}>{t('craving.step.back')}</Text>
+      </TouchableOpacity>
+    );
   }
 
   async function declareDanger() {
@@ -106,6 +153,11 @@ export default function CravingScreen() {
           <TouchableOpacity
             key={option}
             style={[styles.chip, selected === option ? styles.chipSelected : null]}
+            accessibilityRole="button"
+            // The selected chip was a different colour and nothing else. State
+            // carried only in a colour is state that half the users of this
+            // screen do not have.
+            accessibilityState={{ selected: selected === option }}
             onPress={() => onPick(option)}
           >
             <Text
@@ -125,18 +177,27 @@ export default function CravingScreen() {
         <View style={[styles.card, styles.cardWarning]}>
           <Text style={styles.lede}>{emergency?.reply ?? t('safety.emergency')}</Text>
         </View>
-        <Text style={styles.h2}>{t('safety.resourcesTitle').toUpperCase()}</Text>
+        <Text style={styles.h2} accessibilityRole="header">{t('safety.resourcesTitle').toUpperCase()}</Text>
         <View style={styles.card}>
           {(emergency?.safety.resources ?? []).map((resource) => (
             <TouchableOpacity
               key={resource.key}
+              accessibilityRole="button"
+              // Two stacked Texts read as a label and a string of digits, with
+              // nothing to say the row places a call. The number stays visible
+              // because it is what somebody reads off to dial by hand.
+              accessibilityLabel={
+                resource.contact
+                  ? t('action.callNumber', { name: resource.label, number: resource.contact })
+                  : resource.label
+              }
               onPress={() =>
                 resource.contact
                   ? void Linking.openURL(`tel:${resource.contact.replace(/\s/g, '')}`)
                   : undefined
               }
             >
-              <Text style={styles.h3}>{resource.label}</Text>
+              <Text style={styles.h3} accessibilityRole="header">{resource.label}</Text>
               <Text style={styles.body}>{resource.contact}</Text>
             </TouchableOpacity>
           ))}
@@ -148,13 +209,26 @@ export default function CravingScreen() {
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <Text style={styles.h1}>{t('craving.title')}</Text>
+      <Text style={styles.h1} accessibilityRole="header">
+        {t('craving.title')}
+      </Text>
+
+      {/* Where you are in the flow. Four screens that each show one question
+          and no context is what makes people stop halfway. */}
+      {stepIndex >= 0 ? (
+        <Text style={styles.muted}>
+          {t('craving.step.progress', { step: stepIndex + 1, total: QUESTION_STEPS.length })}
+        </Text>
+      ) : null}
 
       {step === 'safety' ? (
         <>
-          <Text style={styles.lede}>{t('craving.step.safety')}</Text>
+          <Text style={styles.lede} accessibilityRole="header">
+            {t('craving.step.safety')}
+          </Text>
           <TouchableOpacity
             style={[styles.button, styles.actionDanger]}
+            accessibilityRole="button"
             onPress={() => void declareDanger()}
             disabled={busy}
           >
@@ -164,6 +238,7 @@ export default function CravingScreen() {
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.button, styles.buttonPrimary]}
+            accessibilityRole="button"
             onPress={() => setStep('feeling')}
           >
             <Text style={[styles.buttonText, styles.buttonTextPrimary]}>
@@ -175,7 +250,9 @@ export default function CravingScreen() {
 
       {step === 'feeling' ? (
         <>
-          <Text style={styles.lede}>{t('craving.step.feeling')}</Text>
+          <Text style={styles.lede} accessibilityRole="header">
+            {t('craving.step.feeling')}
+          </Text>
           <Chips
             options={FEELINGS}
             selected={feeling}
@@ -185,12 +262,15 @@ export default function CravingScreen() {
               setStep('location');
             }}
           />
+          <StepBack to="safety" />
         </>
       ) : null}
 
       {step === 'location' ? (
         <>
-          <Text style={styles.lede}>{t('craving.step.location')}</Text>
+          <Text style={styles.lede} accessibilityRole="header">
+            {t('craving.step.location')}
+          </Text>
           <Chips
             options={LOCATIONS}
             selected={location}
@@ -200,17 +280,25 @@ export default function CravingScreen() {
               setStep('intensity');
             }}
           />
+          <StepBack to="feeling" />
         </>
       ) : null}
 
       {step === 'intensity' ? (
         <>
-          <Text style={styles.lede}>{t('craving.step.intensity')}</Text>
+          <Text style={styles.lede} accessibilityRole="header">
+            {t('craving.step.intensity')}
+          </Text>
           <View style={styles.row}>
             {INTENSITIES.map((value) => (
               <TouchableOpacity
                 key={value}
                 style={[styles.chip, intensity === value ? styles.chipSelected : null]}
+                accessibilityRole="button"
+                accessibilityState={{ selected: intensity === value }}
+                // "8, button" says eight of what. The scale belongs in the
+                // label, on the screen whose whole job is to ask how bad it is.
+                accessibilityLabel={t('scale.valueText', { value })}
                 onPress={() => setIntensity(value)}
               >
                 <Text
@@ -223,6 +311,7 @@ export default function CravingScreen() {
           </View>
           <TouchableOpacity
             style={[styles.button, styles.buttonPrimary]}
+            accessibilityRole="button"
             onPress={() => void buildPlan()}
             disabled={busy}
           >
@@ -230,6 +319,7 @@ export default function CravingScreen() {
               {t('craving.step.coach')}
             </Text>
           </TouchableOpacity>
+          <StepBack to="location" />
         </>
       ) : null}
 
@@ -249,23 +339,26 @@ export default function CravingScreen() {
 
           {plan.callFirst ? (
             <View style={styles.card}>
-              <Text style={styles.h3}>{t('craving.callFirst', { name: plan.callFirst.name })}</Text>
+              <Text style={styles.h3} accessibilityRole="header">
+                {t('craving.callFirst', { name: plan.callFirst.name })}
+              </Text>
               {plan.callFirst.phone ? (
                 <TouchableOpacity
                   style={[styles.button, styles.buttonPrimary]}
+                  accessibilityRole="button"
                   onPress={() =>
                     void Linking.openURL(`tel:${plan.callFirst!.phone!.replace(/\s/g, '')}`)
                   }
                 >
                   <Text style={[styles.buttonText, styles.buttonTextPrimary]}>
-                    {t('action.call')} {plan.callFirst.name}
+                    {t('action.callName', { name: plan.callFirst.name })}
                   </Text>
                 </TouchableOpacity>
               ) : null}
             </View>
           ) : null}
 
-          <Text style={styles.h2}>{t('toolbox.title').toUpperCase()}</Text>
+          <Text style={styles.h2} accessibilityRole="header">{t('toolbox.title').toUpperCase()}</Text>
           <View style={styles.row}>
             {plan.tools.map((tool) => (
               <View style={styles.chip} key={tool.id}>
@@ -276,14 +369,14 @@ export default function CravingScreen() {
 
           {plan.whyStatement ? (
             <>
-              <Text style={styles.h2}>{t('why.title').toUpperCase()}</Text>
+              <Text style={styles.h2} accessibilityRole="header">{t('why.title').toUpperCase()}</Text>
               <View style={styles.card}>
                 <Text style={styles.lede}>{plan.whyStatement}</Text>
               </View>
             </>
           ) : null}
 
-          <Text style={styles.h2}>{t('protocol.title').toUpperCase()}</Text>
+          <Text style={styles.h2} accessibilityRole="header">{t('protocol.title').toUpperCase()}</Text>
           <View style={styles.card}>
             {plan.protocol.map((line, index) => (
               <View style={styles.step} key={line}>
@@ -293,7 +386,7 @@ export default function CravingScreen() {
             ))}
           </View>
 
-          <Text style={styles.h2}>{t('surf.title').toUpperCase()}</Text>
+          <Text style={styles.h2} accessibilityRole="header">{t('surf.title').toUpperCase()}</Text>
           <View style={styles.card}>
             {plan.urgeSurfing.map((line) => (
               <Text style={styles.body} key={line}>
@@ -302,10 +395,11 @@ export default function CravingScreen() {
             ))}
           </View>
 
-          <Text style={styles.h2}>{t('craving.howDidItGo').toUpperCase()}</Text>
+          <Text style={styles.h2} accessibilityRole="header">{t('craving.howDidItGo').toUpperCase()}</Text>
           <View style={{ flexDirection: 'row', gap: 10 }}>
             <TouchableOpacity
               style={[styles.button, styles.buttonPrimary, { flex: 1 }]}
+              accessibilityRole="button"
               onPress={() => void logOutcome('resisted')}
             >
               <Text style={[styles.buttonText, styles.buttonTextPrimary]}>
@@ -314,6 +408,7 @@ export default function CravingScreen() {
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.button, { flex: 1 }]}
+              accessibilityRole="button"
               onPress={() => void logOutcome('used')}
             >
               <Text style={styles.buttonText}>{t('craving.outcome.used')}</Text>
@@ -322,10 +417,18 @@ export default function CravingScreen() {
           {/* Never a scolding, and never silence either. Both buttons are a
               report about the hardest part of somebody's day; the app owes them
               an answer about whether it landed. */}
-          {logNote ? <Text style={styles.muted}>{logNote}</Text> : null}
+          {logNote ? (
+            <Text style={styles.muted} accessibilityLiveRegion="polite" accessibilityRole="alert">
+              {logNote}
+            </Text>
+          ) : null}
 
           <Text style={[styles.lede, { marginTop: 18 }]}>{plan.followUp}</Text>
-          <TouchableOpacity style={styles.button} onPress={() => router.push('/coach')}>
+          <TouchableOpacity
+            style={styles.button}
+            accessibilityRole="button"
+            onPress={() => router.push('/coach')}
+          >
             <Text style={styles.buttonText}>{t('quick.talk')}</Text>
           </TouchableOpacity>
         </>

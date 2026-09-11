@@ -41,11 +41,13 @@ export default function ToolboxScreen() {
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <Text style={styles.h1}>{t('toolbox.title')}</Text>
+      <Text style={styles.h1} accessibilityRole="header">{t('toolbox.title')}</Text>
 
       <View style={styles.row}>
         <TouchableOpacity
           style={[styles.chip, !onlyQuick ? styles.chipSelected : null]}
+          accessibilityRole="button"
+          accessibilityState={{ selected: !onlyQuick }}
           onPress={() => setOnlyQuick(false)}
         >
           <Text style={[styles.chipText, !onlyQuick ? styles.chipTextSelected : null]}>
@@ -54,6 +56,8 @@ export default function ToolboxScreen() {
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.chip, onlyQuick ? styles.chipSelected : null]}
+          accessibilityRole="button"
+          accessibilityState={{ selected: onlyQuick }}
           onPress={() => setOnlyQuick(true)}
         >
           <Text style={[styles.chipText, onlyQuick ? styles.chipTextSelected : null]}>
@@ -67,7 +71,7 @@ export default function ToolboxScreen() {
         if (inCategory.length === 0) return null;
         return (
           <View key={category}>
-            <Text style={styles.h2}>{inCategory[0]?.categoryLabel.toUpperCase()}</Text>
+            <Text style={styles.h2} accessibilityRole="header">{inCategory[0]?.categoryLabel.toUpperCase()}</Text>
             <View style={styles.card}>
               {inCategory.map((tool) => (
                 <View

@@ -70,7 +70,7 @@ export default function RelapseScreen() {
 
       {stage === 'safety' ? (
         <>
-          <Text style={styles.h2}>{t('relapse.safety.are_you_safe').toUpperCase()}</Text>
+          <Text style={styles.h2} accessibilityRole="header">{t('relapse.safety.are_you_safe').toUpperCase()}</Text>
           <View style={styles.card}>
             {questions.safety.map((question) => (
               <Text style={styles.body} key={question.key}>
@@ -99,7 +99,7 @@ export default function RelapseScreen() {
 
       {stage === 'autopsy' ? (
         <>
-          <Text style={styles.h2}>{t('relapse.autopsyTitle').toUpperCase()}</Text>
+          <Text style={styles.h2} accessibilityRole="header">{t('relapse.autopsyTitle').toUpperCase()}</Text>
           <Text style={styles.body}>{t('relapse.autopsyIntro')}</Text>
           {questions.autopsy.map((question) => (
             <View key={question.field} style={{ marginBottom: 10 }}>
@@ -145,10 +145,10 @@ export default function RelapseScreen() {
             </View>
           </View>
 
-          <Text style={styles.h2}>{t('relapse.planTitle').toUpperCase()}</Text>
+          <Text style={styles.h2} accessibilityRole="header">{t('relapse.planTitle').toUpperCase()}</Text>
           {result.protectionPlan.warningSigns.length ? (
             <View style={styles.card}>
-              <Text style={styles.h3}>{t('relapse.planWarnings')}</Text>
+              <Text style={styles.h3} accessibilityRole="header">{t('relapse.planWarnings')}</Text>
               {result.protectionPlan.warningSigns.map((sign) => (
                 <Text style={styles.body} key={sign}>
                   {sign}
@@ -159,7 +159,7 @@ export default function RelapseScreen() {
 
           {result.protectionPlan.countermeasures.length ? (
             <View style={styles.card}>
-              <Text style={styles.h3}>{t('relapse.planCountermeasures')}</Text>
+              <Text style={styles.h3} accessibilityRole="header">{t('relapse.planCountermeasures')}</Text>
               {result.protectionPlan.countermeasures.map((item) => (
                 <Text style={styles.body} key={item}>
                   {item}

@@ -20,7 +20,7 @@ export default function PatternsScreen() {
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <Text style={styles.h1}>{t('indicator.title')}</Text>
+      <Text style={styles.h1} accessibilityRole="header">{t('indicator.title')}</Text>
       <Text style={styles.body}>{t('indicator.explainer')}</Text>
 
       <View style={styles.card}>
@@ -51,7 +51,7 @@ export default function PatternsScreen() {
         })}
       </View>
 
-      <Text style={styles.h2}>{t('insight.title').toUpperCase()}</Text>
+      <Text style={styles.h2} accessibilityRole="header">{t('insight.title').toUpperCase()}</Text>
       <Text style={styles.body}>{t('insight.subtitle')}</Text>
       {data?.insights.length ? (
         data.insights.map((insight) => (

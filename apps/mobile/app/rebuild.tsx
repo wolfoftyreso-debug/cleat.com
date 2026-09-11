@@ -65,13 +65,13 @@ export default function RebuildScreen() {
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <Text style={styles.h1}>{t('rebuild.title')}</Text>
+      <Text style={styles.h1} accessibilityRole="header">{t('rebuild.title')}</Text>
       <Text style={styles.body}>{view?.intro ?? t('rebuild.intro')}</Text>
 
       {view?.suggestion ? (
         <View style={[styles.card, styles.cardAccent]}>
           <Text style={styles.label}>{t('rebuild.pickOne').toUpperCase()}</Text>
-          <Text style={styles.h3}>{view.suggestion.label}</Text>
+          <Text style={styles.h3} accessibilityRole="header">{view.suggestion.label}</Text>
           <Text style={styles.body}>{view.suggestion.reason}</Text>
           <TouchableOpacity
             style={[styles.button, styles.buttonPrimary]}
@@ -93,7 +93,7 @@ export default function RebuildScreen() {
           disabled={busy === domain.id}
         >
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 12 }}>
-            <Text style={styles.h3}>{domain.label}</Text>
+            <Text style={styles.h3} accessibilityRole="header">{domain.label}</Text>
             <Text style={styles.muted}>{domain.statusLabel}</Text>
           </View>
           <Text style={styles.body}>{domain.description}</Text>
