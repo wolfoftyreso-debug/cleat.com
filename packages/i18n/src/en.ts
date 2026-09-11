@@ -38,6 +38,8 @@ export const en: Catalog = {
   'nav.plan': 'My plan',
   'nav.rebuild': 'Rebuild',
   'nav.settings': 'Settings',
+  // Two unnamed navigation regions are both announced as "navigation".
+  'nav.primaryLabel': 'Main navigation',
   'action.back': 'Back',
   'action.next': 'Next',
   'action.skip': 'Skip',
@@ -48,6 +50,10 @@ export const en: Catalog = {
   'action.retry': 'Try again',
   'action.delete': 'Delete',
   'action.call': 'Call',
+  // A phone number as link text is read digit by digit and never says who is
+  // being called. The verb and the name belong in the accessible name.
+  'action.callName': 'Call {name}',
+  'action.callNumber': 'Call {name} on {number}',
   'action.continue': 'Continue',
   'common.loading': 'Loading…',
   'common.error': 'Something went wrong. Try again.',
@@ -113,6 +119,10 @@ export const en: Catalog = {
   'craving.step.location': 'Where are you?',
   'craving.step.intensity': 'How strong is the craving?',
   'craving.step.coach': "Here's what we do.",
+  // A one-question-per-screen flow has to say where you are and let you go
+  // back. Without that, one mistyped chip is a dead end.
+  'craving.step.progress': 'Step {step} of {total}',
+  'craving.step.back': 'Back to the previous question',
   'craving.delay': "We decide nothing for {minutes} minutes. Just {minutes} minutes.",
   'craving.callFirst': 'Call {name} first.',
   'craving.leaveFirst':
@@ -326,6 +336,8 @@ export const en: Catalog = {
   // ---- Check-in ----
   'checkin.morning.title': 'Morning',
   'checkin.evening.title': 'Evening',
+  // Otherwise the slider's value is announced as a bare number with no scale.
+  'scale.valueText': '{value} of 10',
   'checkin.mood': 'How are you doing?',
   'checkin.sleep': 'How did you sleep?',
   'checkin.stress': 'How stressed are you?',

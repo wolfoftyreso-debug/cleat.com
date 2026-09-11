@@ -46,6 +46,8 @@ export const sv = {
   'nav.plan': 'Min plan',
   'nav.rebuild': 'Bygg upp',
   'nav.settings': 'Inställningar',
+  // Två navigationsregioner utan namn läses upp som "navigation" två gånger.
+  'nav.primaryLabel': 'Huvudnavigering',
   'action.back': 'Tillbaka',
   'action.next': 'Nästa',
   'action.skip': 'Hoppa över',
@@ -56,6 +58,10 @@ export const sv = {
   'action.retry': 'Försök igen',
   'action.delete': 'Radera',
   'action.call': 'Ring',
+  // Ett telefonnummer som länktext läses upp siffra för siffra utan att säga
+  // vem man ringer. Verbet och namnet hör till den tillgängliga etiketten.
+  'action.callName': 'Ring {name}',
+  'action.callNumber': 'Ring {name} på {number}',
   'action.continue': 'Fortsätt',
   'common.loading': 'Laddar…',
   'common.error': 'Något gick fel. Försök igen.',
@@ -118,6 +124,10 @@ export const sv = {
   'craving.step.location': 'Var är du?',
   'craving.step.intensity': 'Hur starkt är suget?',
   'craving.step.coach': 'Då gör vi så här.',
+  // Ett flöde med en fråga per skärm måste säga var man är och gå att backa i.
+  // Utan det blir en feltryckt chip en återvändsgränd.
+  'craving.step.progress': 'Steg {step} av {total}',
+  'craving.step.back': 'Tillbaka till föregående fråga',
   'craving.delay': 'Vi bestämmer ingenting på {minutes} minuter. Bara {minutes} minuter.',
   'craving.callFirst': 'Ring {name} först.',
   'craving.leaveFirst': 'Det viktigaste just nu är inte att stå emot. Det är att lämna platsen.',
@@ -329,6 +339,8 @@ export const sv = {
   // ---- Check-in ----
   'checkin.morning.title': 'Morgon',
   'checkin.evening.title': 'Kväll',
+  // Skjutreglagets värde läses annars upp som ett naket tal utan skala.
+  'scale.valueText': '{value} av 10',
   'checkin.mood': 'Hur mår du?',
   'checkin.sleep': 'Hur sov du?',
   'checkin.stress': 'Hur stressad är du?',

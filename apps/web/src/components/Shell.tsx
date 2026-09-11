@@ -27,22 +27,42 @@ export function Shell({ children, title }: { children: ReactNode; title?: string
 
   return (
     <>
+      {/* Outside <main>, so it is a real banner landmark rather than a plain
+          group of text inside the page content. Somebody navigating by landmark
+          could previously not jump past the chrome, because as far as the
+          accessibility tree was concerned there was no chrome — only main. */}
+      <header className="topbar app-topbar">
+        <span className="wordmark">{t('app.name')}</span>
+        <Link href="/settings" className="muted">
+          {t('nav.settings')}
+        </Link>
+      </header>
+
       <main className="shell">
-        <header className="topbar">
-          <span className="wordmark">{t('app.name')}</span>
-          <Link href="/settings" className="muted">
-            {t('nav.settings')}
-          </Link>
-        </header>
         {title ? <h1>{title}</h1> : null}
         {children}
       </main>
-      <nav className="tabbar">
-        {TABS.map((tab) => (
-          <Link key={tab.href} href={tab.href} data-active={pathname === tab.href}>
-            {t(tab.key)}
-          </Link>
-        ))}
+
+      {/* Named, because a page with two navigations and no names announces
+          "navigation" twice and leaves the listener to guess which is which. */}
+      <nav className="tabbar" aria-label={t('nav.primaryLabel')}>
+        {TABS.map((tab) => {
+          const active = pathname === tab.href;
+          return (
+            <Link
+              key={tab.href}
+              href={tab.href}
+              data-active={active}
+              // data-active paints it. aria-current says it. Without the second
+              // one the current tab is obvious to everybody who can see the
+              // colour and invisible to everybody who cannot — which is exactly
+              // the class of defect this audit was looking for.
+              aria-current={active ? 'page' : undefined}
+            >
+              {t(tab.key)}
+            </Link>
+          );
+        })}
       </nav>
     </>
   );
@@ -52,7 +72,11 @@ export function Loading() {
   const { t } = useSession();
   return (
     <main className="shell">
-      <p className="muted">{t('common.loading')}</p>
+      {/* role="status" (implicit aria-live="polite"): the screen goes from
+          "Loading…" to a full dashboard with nothing said about it otherwise. */}
+      <p className="muted" role="status">
+        {t('common.loading')}
+      </p>
     </main>
   );
 }

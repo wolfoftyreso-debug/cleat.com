@@ -1,0 +1,187 @@
+import { expect, test } from '@playwright/test';
+import { expectNoConsoleErrors, failOnConsoleErrors, newEmail, signUp } from './helpers';
+
+/**
+ * The semantics, asserted in a real browser against the real accessibility tree.
+ *
+ * Everything here was found by reading the screens against the same flows in
+ * other products and asking what each control announces, rather than what it
+ * looks like. Every one of these defects rendered perfectly: the active tab was
+ * the right colour and said nothing, the sliders were on screen and had no
+ * names, the craving flow advanced and moved focus nowhere. That is the class
+ * of defect this file exists to hold shut — it cannot be seen in a screenshot,
+ * and no unit test in a Node environment can reach it.
+ *
+ * `getByRole` is used deliberately in place of CSS selectors. A selector asserts
+ * that an element exists; a role query asserts that it is the thing it appears
+ * to be. Where those two disagree is exactly where this product used to be
+ * wrong.
+ */
+
+test.describe('landmarks and headings', () => {
+  test('every screen has exactly one first-level heading', async ({ page }) => {
+    const errors = failOnConsoleErrors(page);
+    await signUp(page, newEmail('headings'));
+
+    // The home screen was the only screen in the product with no heading at
+    // all: the day count — the largest thing on it and the reason people open
+    // it — was a paragraph.
+    for (const path of ['/home', '/plan', '/patterns', '/rebuild', '/coach', '/settings']) {
+      await page.goto(path);
+      await expect(page.getByRole('heading', { level: 1 })).toHaveCount(1);
+    }
+
+    expectNoConsoleErrors(errors);
+  });
+
+  test('the chrome is a banner and the tab bar is a named navigation', async ({ page }) => {
+    const errors = failOnConsoleErrors(page);
+    await signUp(page, newEmail('landmarks'));
+    await page.goto('/home');
+
+    // The header used to live inside <main>, which meant the app had a main
+    // landmark and nothing else: there was no chrome to skip past, because as
+    // far as the accessibility tree was concerned there was no chrome.
+    await expect(page.getByRole('banner')).toBeVisible();
+    await expect(page.getByRole('main')).toBeVisible();
+    await expect(
+      page.getByRole('navigation', { name: /huvudnavigering|main navigation/i }),
+    ).toBeVisible();
+
+    expectNoConsoleErrors(errors);
+  });
+
+  test('the current tab says it is current, not only looks it', async ({ page }) => {
+    const errors = failOnConsoleErrors(page);
+    await signUp(page, newEmail('current'));
+
+    await page.goto('/patterns');
+    const nav = page.getByRole('navigation', { name: /huvudnavigering|main navigation/i });
+    // Exactly one, and the right one. data-active painted it accent-coloured
+    // and told the accessibility tree nothing, so the current tab was obvious
+    // to everyone who could see the colour and invisible to everyone who
+    // could not.
+    await expect(nav.locator('[aria-current="page"]')).toHaveCount(1);
+    await expect(nav.locator('[aria-current="page"]')).toHaveAttribute('href', '/patterns');
+
+    await page.goto('/rebuild');
+    await expect(nav.locator('[aria-current="page"]')).toHaveAttribute('href', '/rebuild');
+
+    expectNoConsoleErrors(errors);
+  });
+});
+
+test.describe('controls have names', () => {
+  test('every slider on the check-in screen says what it is rating', async ({ page }) => {
+    const errors = failOnConsoleErrors(page);
+    await signUp(page, newEmail('sliders'));
+    await page.goto('/checkin');
+
+    const sliders = page.getByRole('slider');
+    const count = await sliders.count();
+    expect(count).toBeGreaterThanOrEqual(4);
+
+    // Four sliders on one screen, each previously announcing "slider, 5" — five
+    // of what, on a screen that asks about mood, sleep, stress and craving. The
+    // <label> was there and was tied to nothing.
+    for (let i = 0; i < count; i += 1) {
+      const slider = sliders.nth(i);
+      const name = await slider.evaluate(
+        (el) => (el as HTMLElement).labels?.[0]?.textContent ?? el.getAttribute('aria-label') ?? '',
+      );
+      expect(name.trim().length, `slider ${i} has no accessible name`).toBeGreaterThan(0);
+      // And the value carries its scale rather than being a naked number.
+      await expect(slider).toHaveAttribute('aria-valuetext', /\d+\s*(av|of)\s*10/);
+    }
+
+    expectNoConsoleErrors(errors);
+  });
+
+  test('a call link says who it calls, not just a string of digits', async ({ page }) => {
+    const errors = failOnConsoleErrors(page);
+    await page.goto('/kris');
+
+    const links = page.locator('a[href^="tel:"]');
+    const count = await links.count();
+    expect(count).toBeGreaterThanOrEqual(3);
+
+    for (let i = 0; i < count; i += 1) {
+      const name = (await links.nth(i).getAttribute('aria-label')) ?? '';
+      // "Ring Giftinformationscentralen på 010 456 67 00" rather than a number
+      // read out digit by digit with no indication of who answers.
+      expect(name, `tel link ${i} announces only its digits`).toMatch(/^(Ring|Call)\s+\S+/);
+    }
+
+    expectNoConsoleErrors(errors);
+  });
+});
+
+test.describe('the craving flow is a flow', () => {
+  test('each question takes focus, can be gone back from, and is a heading', async ({ page }) => {
+    const errors = failOnConsoleErrors(page);
+    await signUp(page, newEmail('cravingflow'));
+    await page.goto('/craving');
+
+    // Step 1 of 4 — the flow says where you are. Four screens that each show
+    // one question and no context is what makes people stop halfway.
+    await expect(page.getByText(/steg 1 av 4|step 1 of 4/i)).toBeVisible();
+
+    await page.getByRole('button', { name: /^(nej|no)$/i }).click();
+
+    // The question is a heading, and focus moved to it. Before this the markup
+    // was swapped out from under whatever had focus, focus fell back to <body>,
+    // and the new question was never announced at all.
+    const question = page.getByRole('heading', { level: 2, name: /känner du|feeling/i });
+    await expect(question).toBeVisible();
+    await expect(question).toBeFocused();
+    await expect(page.getByText(/steg 2 av 4|step 2 of 4/i)).toBeVisible();
+
+    // The answers are a named group, so they are announced as answers to this
+    // question rather than as a dozen loose buttons.
+    await expect(page.getByRole('group', { name: /känner du|feeling/i })).toBeVisible();
+
+    // A mis-tap is recoverable. Tapping a chip both answers and advances, which
+    // is right for one unsteady hand — but it used to make every answer final.
+    await page.getByRole('button', { name: /tillbaka|back/i }).click();
+    await expect(page.getByRole('heading', { level: 2, name: /omedelbar fara|immediate danger/i })).toBeFocused();
+
+    expectNoConsoleErrors(errors);
+  });
+
+  test('the intensity slider is labelled by the question it answers', async ({ page }) => {
+    const errors = failOnConsoleErrors(page);
+    await signUp(page, newEmail('intensity'));
+    await page.goto('/craving');
+
+    await page.getByRole('button', { name: /^(nej|no)$/i }).click();
+    await page.getByRole('group').getByRole('button').first().click();
+    await page.getByRole('group').getByRole('button').first().click();
+
+    // "slider, 7" — seven of what, on the screen whose entire job is to ask how
+    // bad it is right now.
+    const slider = page.getByRole('slider', { name: /starkt är suget|strong is the craving|craving/i });
+    await expect(slider).toBeVisible();
+    await expect(slider).toHaveAttribute('aria-valuetext', /\d+\s*(av|of)\s*10/);
+
+    expectNoConsoleErrors(errors);
+  });
+
+  test('logging an outcome is acknowledged, either way', async ({ page }) => {
+    const errors = failOnConsoleErrors(page);
+    await signUp(page, newEmail('outcome'));
+    await page.goto('/craving');
+
+    await page.getByRole('button', { name: /^(nej|no)$/i }).click();
+    await page.getByRole('group').getByRole('button').first().click();
+    await page.getByRole('group').getByRole('button').first().click();
+    await page.getByRole('button', { name: /gör vi så här|here's what we do/i }).click();
+
+    // The confirmation copy had been written, translated into both languages,
+    // and rendered nowhere: pressing the button at the end of a craving did
+    // nothing visible at all.
+    await page.getByRole('button', { name: /stod emot|got through it/i }).click();
+    await expect(page.getByRole('status')).toContainText(/loggat|logged/i);
+
+    expectNoConsoleErrors(errors);
+  });
+});

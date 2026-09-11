@@ -101,6 +101,21 @@ button {
   margin-bottom: 28px;
 }
 
+/*
+ * The authenticated header is a sibling of <main>, not a child of it, so that
+ * it is a banner landmark. That costs it the shell's centring and gutters, so
+ * it carries its own — and the shell drops the top padding the header now owns.
+ */
+.app-topbar {
+  max-width: 620px;
+  margin: 0 auto 28px;
+  padding: 24px 20px 0;
+}
+
+.app-topbar + .shell {
+  padding-top: 0;
+}
+
 .wordmark {
   font-size: 13px;
   letter-spacing: 0.22em;
@@ -157,7 +172,12 @@ h2 {
   font-weight: 600;
 }
 
-h3 {
+h3,
+/* The home screen's heading is whichever thing the screen is actually about —
+   the streak, or the invitation to make a plan. When it is the second one it
+   sits inside a card and should look like a card title, not like a page title
+   the design never had room for. */
+h1.card-title {
   font-size: 17px;
   margin: 0 0 6px;
   font-weight: 600;
@@ -417,6 +437,46 @@ textarea {
   background: var(--accent-soft);
   border-color: var(--accent);
   color: var(--text);
+}
+
+/* The craving flow's answers are a list of chips, and a list needs no bullets. */
+.chip-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* ------------------------------------------------- one question per screen --- */
+
+.step-counter {
+  margin: 0 0 8px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-size: 12px;
+}
+
+/*
+ * The question on a one-question screen is a heading, so that it is in the
+ * outline and can take focus when the step changes. It must not inherit the
+ * small uppercase eyebrow that h2 carries everywhere else — it is the largest
+ * thing on the screen, not a section label above something larger.
+ */
+.step-question {
+  font-size: 17px;
+  line-height: 1.45;
+  letter-spacing: normal;
+  text-transform: none;
+  font-weight: 400;
+  color: var(--text);
+  margin: 0 0 20px;
+}
+
+/* Programmatic focus still has to be visible: a heading that takes focus with
+   no ring moves a sighted keyboard user somewhere they cannot see. */
+.step-question:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 6px;
+  border-radius: 6px;
 }
 
 /* ---------------------------------------------------------------- meters --- */

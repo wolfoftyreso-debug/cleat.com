@@ -5,27 +5,44 @@ import { Loading, Shell } from '../../components/Shell';
 import { api } from '../../lib/api';
 import { useRequireAuth } from '../../lib/session';
 
+/**
+ * A 0-10 scale.
+ *
+ * The label used to be a bare <label> with nothing tying it to the input, which
+ * is a label in appearance only: the slider announced itself as "slider, 5" with
+ * no indication of what was being rated, four times on one screen. It is now a
+ * real label, and the value is spoken as "5 of 10" rather than as a naked
+ * number that could mean anything.
+ */
 function Scale({
+  id,
   label,
   value,
   onChange,
+  valueText,
 }: {
+  id: string;
   label: string;
   value: number;
   onChange: (next: number) => void;
+  valueText: (value: number) => string;
 }) {
   return (
     <div className="field">
-      <label>{label}</label>
+      <label htmlFor={id}>{label}</label>
       <div className="slider-row">
         <input
+          id={id}
           type="range"
           min={0}
           max={10}
           value={value}
+          aria-valuetext={valueText(value)}
           onChange={(event) => onChange(Number(event.target.value))}
         />
-        <span className="slider-value">{value}</span>
+        <span className="slider-value" aria-hidden="true">
+          {value}
+        </span>
       </div>
     </div>
   );
@@ -49,6 +66,8 @@ export default function CheckInPage() {
   const [busy, setBusy] = useState(false);
 
   if (loading || !user) return <Loading />;
+
+  const scaleText = (value: number) => t('scale.valueText', { value });
 
   async function save() {
     setBusy(true);
@@ -99,13 +118,33 @@ export default function CheckInPage() {
       </div>
 
       <div className="card">
-        <Scale label={t('checkin.mood')} value={mood} onChange={setMood} />
-        <Scale label={t('checkin.sleep')} value={sleepQuality} onChange={setSleepQuality} />
-        <Scale label={t('checkin.stress')} value={stress} onChange={setStress} />
         <Scale
+          id="scale-mood"
+          label={t('checkin.mood')}
+          value={mood}
+          onChange={setMood}
+          valueText={scaleText}
+        />
+        <Scale
+          id="scale-sleep"
+          label={t('checkin.sleep')}
+          value={sleepQuality}
+          onChange={setSleepQuality}
+          valueText={scaleText}
+        />
+        <Scale
+          id="scale-stress"
+          label={t('checkin.stress')}
+          value={stress}
+          onChange={setStress}
+          valueText={scaleText}
+        />
+        <Scale
+          id="scale-craving"
           label={t('checkin.craving')}
           value={cravingIntensity}
           onChange={setCravingIntensity}
+          valueText={scaleText}
         />
       </div>
 

@@ -100,7 +100,7 @@ export default function StrugglingPage() {
           <div className="btn-row">
             {primaryContact?.phone ? (
               <a className="btn primary" href={`tel:${primaryContact.phone.replace(/\s/g, '')}`}>
-                {t('action.call')} {primaryContact.name}
+                {t('action.callName', { name: primaryContact.name })}
               </a>
             ) : (
               <Link className="btn" href="/plan#support">

@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { CRAVING_FEELINGS, CRAVING_LOCATIONS } from '@cleat/core';
 import { Loading, Shell } from '../../components/Shell';
 import { api, type CoachResponse, type CravingPlan } from '../../lib/api';
@@ -26,6 +26,24 @@ const LOCATIONS = CRAVING_LOCATIONS;
 type Step = 'safety' | 'feeling' | 'location' | 'intensity' | 'plan' | 'emergency';
 
 /**
+ * The way back one question.
+ *
+ * Tapping a chip both answers and advances, which is right — it is the fastest
+ * thing to do with one unsteady hand — but it also means a mis-tap used to be
+ * final. Quiet and below the answers, so it is there without competing with
+ * them.
+ */
+function StepBack({ label, onClick }: { label: string; onClick: () => void }) {
+  return (
+    <p className="center">
+      <button type="button" className="pill" onClick={onClick}>
+        {label}
+      </button>
+    </p>
+  );
+}
+
+/**
  * The craving engine.
  *
  * One question per screen, large targets, no typing required to get help. The
@@ -41,8 +59,37 @@ export default function CravingPage() {
   const [plan, setPlan] = useState<(CravingPlan & { offline?: boolean }) | null>(null);
   const [emergency, setEmergency] = useState<CoachResponse | null>(null);
   const [busy, setBusy] = useState(false);
+  /** Set once an outcome has been recorded, so the press is acknowledged. */
+  const [logged, setLogged] = useState(false);
+
+  /*
+   * One question per screen means the question is the screen. When the step
+   * changes React swaps the markup out from under whatever had focus, and
+   * focus falls back to <body>: a keyboard user lands at the top of the
+   * document each time, and a screen reader says nothing at all — the new
+   * question is simply never announced. Moving focus to the heading is what
+   * makes the flow a flow rather than five pages that happen to share a URL.
+   */
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  const firstStep = useRef(true);
+  useEffect(() => {
+    // Not on arrival: the page's own <h1> is the right landing point, and
+    // stealing focus on first paint moves somebody who has not acted yet.
+    if (firstStep.current) {
+      firstStep.current = false;
+      return;
+    }
+    headingRef.current?.focus();
+  }, [step]);
 
   if (loading || !user) return <Loading />;
+
+  const QUESTION_STEPS: Step[] = ['safety', 'feeling', 'location', 'intensity'];
+  const stepIndex = QUESTION_STEPS.indexOf(step);
+  const back = (target: Step) => {
+    setLogged(false);
+    setStep(target);
+  };
 
   async function declareDanger() {
     setBusy(true);
@@ -83,6 +130,11 @@ export default function CravingPage() {
   }
 
   async function logOutcome(outcome: 'resisted' | 'used') {
+    // Acknowledged either way. The request may go to the queue instead of the
+    // server, but from where the person is standing the thing they pressed
+    // happened — and a button that does nothing visible after being pressed at
+    // the end of a craving reads as the app having stopped caring.
+    setLogged(true);
     try {
       await api.post('/v1/cravings', { intensity, feeling, location, outcome });
     } catch {
@@ -110,7 +162,18 @@ export default function CravingPage() {
             <div className="resource" key={resource.key}>
               <span>{resource.label}</span>
               {resource.contact ? (
-                <a className="num" href={`tel:${resource.contact.replace(/\s/g, '')}`}>
+                // The visible text stays the number — it is what somebody
+                // reads off the screen to dial by hand. The accessible name
+                // adds the verb and who answers, because "zero two zero two
+                // two zero zero six zero" on its own says neither.
+                <a
+                  className="num"
+                  href={`tel:${resource.contact.replace(/\s/g, '')}`}
+                  aria-label={t('action.callNumber', {
+                    name: resource.label,
+                    number: resource.contact,
+                  })}
+                >
                   {resource.contact}
                 </a>
               ) : null}
@@ -124,9 +187,20 @@ export default function CravingPage() {
 
   return (
     <Shell title={t('craving.title')}>
+      {/* Where you are in the flow. Four screens that each show one question
+          and no context is the pattern that makes people abandon halfway,
+          because nothing on screen says whether the next tap is the last one. */}
+      {stepIndex >= 0 ? (
+        <p className="muted step-counter">
+          {t('craving.step.progress', { step: stepIndex + 1, total: QUESTION_STEPS.length })}
+        </p>
+      ) : null}
+
       {step === 'safety' ? (
         <>
-          <p className="lede">{t('craving.step.safety')}</p>
+          <h2 className="lede step-question" ref={headingRef} tabIndex={-1}>
+            {t('craving.step.safety')}
+          </h2>
           {/* Full width and stacked, not two small chips side by side.
               This is the screen somebody opens at their worst, possibly with
               unsteady hands, and these two buttons are the only things on it —
@@ -150,13 +224,19 @@ export default function CravingPage() {
 
       {step === 'feeling' ? (
         <>
-          <p className="lede">{t('craving.step.feeling')}</p>
-          <div className="chips">
+          <h2 className="lede step-question" id="q-feeling" ref={headingRef} tabIndex={-1}>
+            {t('craving.step.feeling')}
+          </h2>
+          {/* A named group, so the answers are announced as answers to this
+              question rather than as a dozen loose buttons in a row. They are
+              buttons and not radios on purpose: a tap does not select, it
+              answers and moves on, and nothing here is ever submitted. */}
+          <div className="chips" role="group" aria-labelledby="q-feeling">
             {FEELINGS.map((option) => (
               <button
                 key={option}
                 className="chip"
-                data-selected={feeling === option}
+                type="button"
                 onClick={() => {
                   setFeeling(option);
                   setStep('location');
@@ -166,18 +246,21 @@ export default function CravingPage() {
               </button>
             ))}
           </div>
+          <StepBack label={t('craving.step.back')} onClick={() => back('safety')} />
         </>
       ) : null}
 
       {step === 'location' ? (
         <>
-          <p className="lede">{t('craving.step.location')}</p>
-          <div className="chips">
+          <h2 className="lede step-question" id="q-location" ref={headingRef} tabIndex={-1}>
+            {t('craving.step.location')}
+          </h2>
+          <div className="chips" role="group" aria-labelledby="q-location">
             {LOCATIONS.map((option) => (
               <button
                 key={option}
                 className="chip"
-                data-selected={location === option}
+                type="button"
                 onClick={() => {
                   setLocation(option);
                   setStep('intensity');
@@ -187,27 +270,44 @@ export default function CravingPage() {
               </button>
             ))}
           </div>
+          <StepBack label={t('craving.step.back')} onClick={() => back('feeling')} />
         </>
       ) : null}
 
       {step === 'intensity' ? (
         <>
-          <p className="lede">{t('craving.step.intensity')}</p>
+          <h2 className="lede step-question" id="q-intensity" ref={headingRef} tabIndex={-1}>
+            {t('craving.step.intensity')}
+          </h2>
           <div className="card">
             <div className="slider-row">
+              {/* The question is the slider's label. Unlabelled, it announced
+                  itself as "slider, 7" — seven of what, on a screen whose whole
+                  purpose is to ask how bad it is right now. */}
               <input
+                id="craving-intensity"
                 type="range"
                 min={0}
                 max={10}
                 value={intensity}
+                aria-labelledby="q-intensity"
+                aria-valuetext={t('scale.valueText', { value: intensity })}
                 onChange={(event) => setIntensity(Number(event.target.value))}
               />
-              <span className="slider-value">{intensity}</span>
+              <span className="slider-value" aria-hidden="true">
+                {intensity}
+              </span>
             </div>
           </div>
-          <button className="btn primary wide" onClick={() => void buildPlan()} disabled={busy}>
+          <button
+            className="btn primary wide"
+            type="button"
+            onClick={() => void buildPlan()}
+            disabled={busy}
+          >
             {t('craving.step.coach')}
           </button>
+          <StepBack label={t('craving.step.back')} onClick={() => back('location')} />
         </>
       ) : null}
 
@@ -233,20 +333,23 @@ export default function CravingPage() {
                   className="btn primary wide"
                   href={`tel:${plan.callFirst.phone.replace(/\s/g, '')}`}
                 >
-                  {t('action.call')} {plan.callFirst.name}
+                  {t('action.callName', { name: plan.callFirst.name })}
                 </a>
               ) : null}
             </div>
           ) : null}
 
           <h2>{t('toolbox.title')}</h2>
-          <div className="chips">
+          {/* A list, because it is one. As loose <span>s the count was never
+              announced, so there was no way to know whether two things had been
+              suggested or nine without reading to the end of them. */}
+          <ul className="chips chip-list">
             {plan.tools.map((tool) => (
-              <span className="chip" key={tool.id}>
+              <li className="chip" key={tool.id}>
                 {tool.label}
-              </span>
+              </li>
             ))}
-          </div>
+          </ul>
 
           {plan.whyStatement ? (
             <>
@@ -272,14 +375,27 @@ export default function CravingPage() {
           </div>
 
           <h2>{t('craving.howDidItGo')}</h2>
-          <div className="btn-row">
-            <button className="btn primary" onClick={() => void logOutcome('resisted')}>
-              {t('craving.outcome.resisted')}
-            </button>
-            <button className="btn" onClick={() => void logOutcome('used')}>
-              {t('craving.outcome.used')}
-            </button>
-          </div>
+          {/* Either answer is an answer. Neither is congratulated and neither is
+              scolded — the copy is the same one line for both, because "I used"
+              is a log entry, not a verdict. */}
+          {logged ? (
+            <p className="card accent" role="status">
+              {t('craving.logged')}
+            </p>
+          ) : (
+            <div className="btn-row">
+              <button
+                className="btn primary"
+                type="button"
+                onClick={() => void logOutcome('resisted')}
+              >
+                {t('craving.outcome.resisted')}
+              </button>
+              <button className="btn" type="button" onClick={() => void logOutcome('used')}>
+                {t('craving.outcome.used')}
+              </button>
+            </div>
+          )}
 
           <div className="spacer" />
           <p className="lede">{plan.followUp}</p>

@@ -85,7 +85,14 @@ export default function CoachPage() {
                   <div className="resource" key={resource.key}>
                     <span>{resource.label}</span>
                     {resource.contact ? (
-                      <a className="num" href={`tel:${resource.contact.replace(/\s/g, '')}`}>
+                      <a
+                        className="num"
+                        href={`tel:${resource.contact.replace(/\s/g, '')}`}
+                        aria-label={t('action.callNumber', {
+                          name: resource.label,
+                          number: resource.contact,
+                        })}
+                      >
                         {resource.contact}
                       </a>
                     ) : null}

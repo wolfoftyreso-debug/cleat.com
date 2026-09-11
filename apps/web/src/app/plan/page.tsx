@@ -272,7 +272,14 @@ export default function PlanPage() {
                 ) : null}
               </span>
               {contact.phone ? (
-                <a className="num" href={`tel:${contact.phone.replace(/\s/g, '')}`}>
+                // Every contact's link said only "Ring". In a list of five
+                // people that is five links with the same name and no way to
+                // tell, without sight, which one calls whom.
+                <a
+                  className="num"
+                  href={`tel:${contact.phone.replace(/\s/g, '')}`}
+                  aria-label={t('action.callName', { name: contact.name })}
+                >
                   {t('action.call')}
                 </a>
               ) : null}

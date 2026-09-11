@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { emergencyResources } from '@cleat/core';
-import { translate } from '@cleat/i18n';
+import { translator } from '@cleat/i18n';
 import { publicPage } from '../../lib/seo';
 import styles from '../landing.module.css';
 
@@ -26,7 +26,7 @@ import styles from '../landing.module.css';
 const COUNTRY = 'SE';
 const LOCALE = 'sv';
 
-const t = (key: string) => translate(LOCALE, key);
+const t = translator(LOCALE);
 
 export const metadata = publicPage({
   title: 'Akut hjälp — nummer att ringa nu',
@@ -60,6 +60,13 @@ export default function CrisisPage() {
               <p style={{ margin: '0 0 10px' }}>
                 <a
                   href={`tel:${resource.contact.replace(/\s/g, '')}`}
+                  // The number stays the visible text — it is what somebody
+                  // reads off the screen to dial on another phone. The
+                  // accessible name adds the verb and who answers.
+                  aria-label={t('action.callNumber', {
+                    name: t(resource.key),
+                    number: resource.contact,
+                  })}
                   style={{ color: 'var(--accent-strong)', fontSize: '1.35rem', fontWeight: 700 }}
                 >
                   {resource.contact}

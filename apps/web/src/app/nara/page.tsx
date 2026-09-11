@@ -6,7 +6,7 @@ import {
   SUPPORTER_EMERGENCY_SIGNS,
   SUPPORTER_TOPICS,
 } from '@cleat/core';
-import { translate } from '@cleat/i18n';
+import { translator } from '@cleat/i18n';
 import { publicPage } from '../../lib/seo';
 import styles from '../landing.module.css';
 import { SupporterCheck } from '../../components/SupporterCheck';
@@ -30,7 +30,7 @@ import { SupporterCheck } from '../../components/SupporterCheck';
 const LOCALE = 'sv';
 const COUNTRY = 'SE';
 
-const t = (key: string) => translate(LOCALE, key);
+const t = translator(LOCALE);
 
 export const metadata = publicPage({
   title: 'Anhörig till någon som dricker eller använder',
@@ -82,6 +82,10 @@ export default function SupporterPage() {
               <span key={resource.key} style={{ marginRight: 18, display: 'inline-block' }}>
                 <a
                   href={`tel:${resource.contact.replace(/\s/g, '')}`}
+                  aria-label={t('action.callNumber', {
+                    name: t(resource.key),
+                    number: resource.contact,
+                  })}
                   style={{ color: 'var(--accent-strong)', fontWeight: 700 }}
                 >
                   {resource.contact}
@@ -148,6 +152,10 @@ export default function SupporterPage() {
                 <p className={styles.cardBody}>
                   <a
                     href={`tel:${resource.contact.replace(/\s/g, '')}`}
+                    aria-label={t('action.callNumber', {
+                      name: t(resource.key),
+                      number: resource.contact,
+                    })}
                     style={{ color: 'var(--accent-strong)', fontSize: '1.2rem', fontWeight: 700 }}
                   >
                     {resource.contact}

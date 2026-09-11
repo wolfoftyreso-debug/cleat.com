@@ -52,8 +52,15 @@ export default function HomePage() {
     <Shell>
       {error ? <div className="error-banner">{t('common.error')}</div> : null}
 
+      {/*
+        The screen's heading is the number of days, because that is what the
+        screen is about. It used to be a <p>: the home screen — the one somebody
+        opens every morning — was the only screen in the product with no heading
+        at all, so landing on it announced nothing and there was nothing to
+        navigate to.
+      */}
       {data?.streak ? (
-        <p className="daycount">
+        <h1 className="daycount">
           <span>{t('common.day')}</span>
           {data.streak.currentDays}
           {data.streak.isPersonalRecord ? (
@@ -63,10 +70,10 @@ export default function HomePage() {
               </span>
             </em>
           ) : null}
-        </p>
+        </h1>
       ) : (
         <div className="card accent">
-          <h3>{t('home.noPlanTitle')}</h3>
+          <h1 className="card-title">{t('home.noPlanTitle')}</h1>
           <p>{t('home.noPlanBody')}</p>
           <Link className="btn primary" href="/plan">
             {t('home.startHere')}
