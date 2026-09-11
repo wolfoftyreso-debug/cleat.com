@@ -85,8 +85,16 @@ export default function SettingsPage() {
 
   return (
     <Shell title={t('settings.title')}>
-      {message ? <div className="error-banner">{message}</div> : null}
-      {error ? <div className="error-banner">{error}</div> : null}
+      {/* Not the red banner. Taking your own data out of a product about your
+          drinking is the one thing here that should never look like something
+          went wrong — and role="status" rather than "alert", because it is
+          good news and can wait for a gap in what is being read. */}
+      {message ? (
+        <div className="notice-banner" role="status">
+          {message}
+        </div>
+      ) : null}
+      {error ? <div className="error-banner" role="alert">{error}</div> : null}
 
       <h2>{t('settings.language')}</h2>
       <div className="chips">
@@ -170,7 +178,7 @@ export default function SettingsPage() {
       <div className="card warning">
         <h3>{t('privacy.delete')}</h3>
         <p>{t('privacy.deleteConfirm')}</p>
-        {deleteError ? <div className="error-banner">{deleteError}</div> : null}
+        {deleteError ? <div className="error-banner" role="alert">{deleteError}</div> : null}
         <div className="field">
           <label htmlFor="delete-confirm">{deleteWord}</label>
           <input

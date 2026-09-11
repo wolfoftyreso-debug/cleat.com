@@ -85,7 +85,7 @@ export default function SupporterTalkPage() {
         </>
       ) : null}
 
-      <div className="chat">
+      <div className="chat" role="log" aria-label={t('near.talkConversationLabel')}>
         {messages.map((bubble, index) => (
           <div key={index}>
             <div
@@ -93,11 +93,15 @@ export default function SupporterTalkPage() {
               data-role={bubble.role}
               data-emergency={bubble.emergency ? 'true' : 'false'}
             >
+              {/* Colour and alignment told these apart and nothing else. */}
+              <span className="visually-hidden">
+                {t(bubble.role === 'user' ? 'coach.fromYou' : 'near.fromCompanion')}:{' '}
+              </span>
               {bubble.content}
             </div>
             {bubble.resources?.length ? (
               <div className="card warning" style={{ marginTop: 10 }}>
-                <h3>{t('safety.resourcesTitle')}</h3>
+                <h2>{t('safety.resourcesTitle')}</h2>
                 {bubble.resources.map((resource) => (
                   <div className="resource" key={resource.key}>
                     <span>{resource.label}</span>
@@ -134,7 +138,11 @@ export default function SupporterTalkPage() {
         }}
       >
         <div className="field">
+          <label className="visually-hidden" htmlFor="near-message">
+            {t('near.talkInputLabel')}
+          </label>
           <textarea
+            id="near-message"
             value={draft}
             onChange={(event) => setDraft(event.target.value)}
             placeholder={t('near.talkPlaceholder')}

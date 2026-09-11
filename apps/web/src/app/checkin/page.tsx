@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Loading, Shell } from '../../components/Shell';
+import { useAction } from '../../lib/action';
 import { api } from '../../lib/api';
 import { useRequireAuth } from '../../lib/session';
 
@@ -63,43 +64,52 @@ export default function CheckInPage() {
   const [wasHard, setWasHard] = useState('');
   const [learned, setLearned] = useState('');
   const [saved, setSaved] = useState(false);
-  const [busy, setBusy] = useState(false);
+  /*
+   * This screen was the one that never adopted the shared action helper, and it
+   * was written in exactly the shape that helper exists to replace: try/finally
+   * with no catch. A failed check-in rejected with nobody listening, the button
+   * stopped spinning, and the screen went back to looking precisely as it had
+   * before — with everything the person had just written about their night
+   * still on it and no indication that none of it had been saved.
+   */
+  const { busy, error, run } = useAction(t);
 
   if (loading || !user) return <Loading />;
 
   const scaleText = (value: number) => t('scale.valueText', { value });
 
   async function save() {
-    setBusy(true);
-    try {
-      // The client sends its own local day: the server's UTC "today" would push
-      // an evening check-in into tomorrow for anyone east of Greenwich.
-      const now = new Date();
-      const day = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(
-        now.getDate(),
-      ).padStart(2, '0')}`;
+    setSaved(false);
+    // The client sends its own local day: the server's UTC "today" would push
+    // an evening check-in into tomorrow for anyone east of Greenwich.
+    const now = new Date();
+    const day = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(
+      now.getDate(),
+    ).padStart(2, '0')}`;
 
-      await api.post('/v1/checkins', {
-        kind,
-        day,
-        mood,
-        sleepQuality,
-        stress,
-        cravingIntensity,
-        biggestRisk: kind === 'morning' ? biggestRisk : null,
-        keyDecision: kind === 'morning' ? keyDecision : null,
-        wentWell: kind === 'evening' ? wentWell : null,
-        wasHard: kind === 'evening' ? wasHard : null,
-        learned: kind === 'evening' ? learned : null,
-      });
-      setSaved(true);
-    } finally {
-      setBusy(false);
-    }
+    await api.post('/v1/checkins', {
+      kind,
+      day,
+      mood,
+      sleepQuality,
+      stress,
+      cravingIntensity,
+      biggestRisk: kind === 'morning' ? biggestRisk : null,
+      keyDecision: kind === 'morning' ? keyDecision : null,
+      wentWell: kind === 'evening' ? wentWell : null,
+      wasHard: kind === 'evening' ? wasHard : null,
+      learned: kind === 'evening' ? learned : null,
+    });
+    setSaved(true);
   }
 
   return (
     <Shell title={t(kind === 'morning' ? 'checkin.morning.title' : 'checkin.evening.title')}>
+      {error ? (
+        <div className="error-banner" role="alert">
+          {error}
+        </div>
+      ) : null}
       <div className="chips" style={{ marginBottom: 20 }}>
         <button
           className="chip"
@@ -196,7 +206,7 @@ export default function CheckInPage() {
         </div>
       )}
 
-      <button className="btn primary wide" onClick={() => void save()} disabled={busy}>
+      <button className="btn primary wide" onClick={run(save)} disabled={busy}>
         {saved ? t('checkin.saved') : t('action.save')}
       </button>
     </Shell>

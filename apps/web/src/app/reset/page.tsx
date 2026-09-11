@@ -84,7 +84,7 @@ export default function ResetPasswordPage() {
           <p className="lede">{t('auth.resetBody')}</p>
           <div className="spacer" />
           <form onSubmit={(event) => void submit(event)} className="card">
-            {error ? <div className="error-banner">{error}</div> : null}
+            {error ? <div className="error-banner" role="alert">{error}</div> : null}
             <div className="field">
               <label htmlFor="password">{t('auth.resetNewPassword')}</label>
               <input

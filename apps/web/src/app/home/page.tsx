@@ -50,7 +50,7 @@ export default function HomePage() {
 
   return (
     <Shell>
-      {error ? <div className="error-banner">{t('common.error')}</div> : null}
+      {error ? <div className="error-banner" role="alert">{t('common.error')}</div> : null}
 
       {/*
         The screen's heading is the number of days, because that is what the

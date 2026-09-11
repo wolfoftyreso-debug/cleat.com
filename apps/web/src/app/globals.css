@@ -439,6 +439,31 @@ textarea {
   color: var(--text);
 }
 
+/*
+ * A label that is read but not seen.
+ *
+ * Used where the design already makes a control's purpose obvious by position
+ * — the message box at the bottom of a conversation — but the control itself
+ * still has to carry a name. A placeholder is not a name: it disappears the
+ * moment somebody starts typing, and it is not reliably announced as one.
+ *
+ * Not `display: none` and not `visibility: hidden`, both of which remove the
+ * element from the accessibility tree along with the screen, which is the
+ * opposite of what this is for.
+ */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
 /* The craving flow's answers are a list of chips, and a list needs no bullets. */
 .chip-list {
   list-style: none;
@@ -706,6 +731,23 @@ input[type='range'] {
   background: var(--danger-soft);
   border: 1px solid rgba(229, 72, 77, 0.4);
   color: #ffb9bb;
+  padding: 12px 14px;
+  border-radius: 12px;
+  margin-bottom: 14px;
+  font-size: 14px;
+}
+
+/*
+ * The same shape, for something that went right.
+ *
+ * "Your export is ready" was rendered in the red banner, so the one moment in
+ * this product where somebody successfully takes their own data with them
+ * looked exactly like a failure.
+ */
+.notice-banner {
+  background: var(--accent-soft);
+  border: 1px solid var(--accent);
+  color: var(--text);
   padding: 12px 14px;
   border-radius: 12px;
   margin-bottom: 14px;

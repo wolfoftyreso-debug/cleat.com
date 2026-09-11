@@ -53,7 +53,7 @@ export default function RelapsePage() {
 
   return (
     <Shell title={t('relapse.title')}>
-      {error ? <div className="error-banner">{error}</div> : null}
+      {error ? <div className="error-banner" role="alert">{error}</div> : null}
       <div className="card accent">
         <p className="lede">{questions.opening}</p>
         <p>{questions.continuity}</p>

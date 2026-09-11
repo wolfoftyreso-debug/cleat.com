@@ -728,6 +728,17 @@ export const en: Catalog = {
   'coach.placeholder': "Tell me what's happening…",
   'coach.send': 'Send',
   'coach.thinking': 'Thinking…',
+  /*
+   * Who says what.
+   *
+   * The bubbles were told apart by colour and alignment and nothing else, so a
+   * conversation read aloud was a wall of text in which your own words and the
+   * coach's sounded exactly the same.
+   */
+  'coach.inputLabel': 'Write a message to the coach',
+  'coach.fromYou': 'You',
+  'coach.fromCoach': 'Coach',
+  'coach.conversationLabel': 'The conversation with the coach',
   'coach.offline':
     "I'm not quite connected right now, but I'm still here with you and all the tools work. Would you like us to go through the ten minutes together?",
   'coach.greeting.day_zero': "You've started — do you know how big that is? I'm so glad you're here. We'll take just the next ten minutes, together.",
@@ -1022,6 +1033,9 @@ export const en: Catalog = {
     'A conversation about your situation, not theirs. You can say it straight out: that you are tired, that you are angry, that you are thinking about leaving, that you do not recognise yourself any more.',
   'near.talkGreeting': 'What is heaviest right now — for you, that is?',
   'near.talkPlaceholder': 'Write what is going on with you…',
+  'near.talkInputLabel': 'Write a message',
+  'near.talkConversationLabel': 'The conversation',
+  'near.fromCompanion': 'Someone to think with',
   'near.talkNotAboutThem':
     'I know nothing about the person you are describing, and I have no connection to their account. I can only go on what you tell me.',
   'near.talkNoAdviceOnLeaving':

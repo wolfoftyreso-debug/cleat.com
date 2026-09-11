@@ -77,9 +77,14 @@ test.describe('controls have names', () => {
     await signUp(page, newEmail('sliders'));
     await page.goto('/checkin');
 
+    // Web-first, not a bare count(). This screen is a client component, so
+    // counting straight after goto() races hydration — and it lost that race
+    // once on this machine. A flaky assertion is one people learn to re-run
+    // instead of read.
     const sliders = page.getByRole('slider');
+    await expect(sliders.first()).toBeVisible();
+    await expect(sliders).toHaveCount(4);
     const count = await sliders.count();
-    expect(count).toBeGreaterThanOrEqual(4);
 
     // Four sliders on one screen, each previously announcing "slider, 5" — five
     // of what, on a screen that asks about mood, sleep, stress and craving. The
@@ -181,6 +186,86 @@ test.describe('the craving flow is a flow', () => {
     // nothing visible at all.
     await page.getByRole('button', { name: /stod emot|got through it/i }).click();
     await expect(page.getByRole('status')).toContainText(/loggat|logged/i);
+
+    expectNoConsoleErrors(errors);
+  });
+});
+
+test.describe('the conversation is a conversation', () => {
+  test('the coach transcript is a log, and says who is speaking', async ({ page }) => {
+    const errors = failOnConsoleErrors(page);
+    await signUp(page, newEmail('coachlog'));
+    await page.goto('/coach');
+
+    // A running transcript that is added to. Before this the coach's reply
+    // simply appeared and nothing was said about it at all.
+    //
+    // Attached rather than visible: an empty transcript has no height, which is
+    // correct — there is nothing in it yet.
+    const log = page.getByRole('log');
+    await expect(log).toBeAttached();
+
+    // The message box is the most used input in the product and had only a
+    // placeholder, which is not a name: it goes away the moment somebody types.
+    const box = page.getByRole('textbox', { name: /skriv ett meddelande|write a message/i });
+    await expect(box).toBeVisible();
+
+    await box.fill('Jag har sug just nu.');
+    await page.getByRole('button', { name: /skicka|send/i }).click();
+    await expect(log).toBeVisible();
+
+    // Both turns are attributed. The bubbles were told apart by colour and
+    // which side of the screen they sat on, so read aloud the conversation was
+    // one undifferentiated voice.
+    await expect(log).toContainText(/^(Du|You):/m);
+    await expect(log.getByText(/(Coach):/).first()).toBeAttached();
+
+    expectNoConsoleErrors(errors);
+  });
+});
+
+test.describe('a save that fails says so', () => {
+  /**
+   * The check-in screen was the one that never adopted the shared action
+   * helper, and it was written in exactly the shape that helper exists to
+   * replace: try/finally with no catch. The request rejected with nobody
+   * listening, the button stopped spinning, and the screen went back to looking
+   * precisely as it had before — with everything the person had just written
+   * about their night still on it and nothing to say none of it had saved.
+   */
+  test('a failed check-in is reported, not swallowed', async ({ page }) => {
+    const errors = failOnConsoleErrors(page);
+    await signUp(page, newEmail('checkinfail'));
+    await page.goto('/checkin');
+
+    await page.route('**/v1/checkins', (route) => route.abort('failed'));
+    await page.getByRole('button', { name: /^(spara|save)$/i }).click();
+
+    // Scoped to our banner: Next's own route announcer is also a role="alert",
+    // sitting empty at the top of the document between navigations.
+    const banner = page.locator('.error-banner');
+    await expect(banner).toBeVisible();
+    await expect(banner).toHaveAttribute('role', 'alert');
+    // And the button has not claimed success.
+    await expect(page.getByRole('button', { name: /sparat|saved/i })).toHaveCount(0);
+
+    expectNoConsoleErrors(errors, [/Failed to load resource/, /net::ERR_FAILED/, /ERR_FAILED/]);
+  });
+
+  test('taking your own data out does not look like a failure', async ({ page }) => {
+    const errors = failOnConsoleErrors(page);
+    await signUp(page, newEmail('export'));
+    await page.goto('/settings');
+
+    await page.getByRole('button', { name: /export|exportera/i }).first().click();
+
+    // "Your export is ready" was rendered in the red error banner, so the one
+    // moment here where somebody successfully takes their own data with them
+    // looked exactly like something had gone wrong.
+    const notice = page.locator('.notice-banner');
+    await expect(notice).toBeVisible();
+    await expect(notice).toHaveAttribute('role', 'status');
+    await expect(page.locator('.error-banner')).toHaveCount(0);
 
     expectNoConsoleErrors(errors);
   });

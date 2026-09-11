@@ -95,12 +95,16 @@ export default function SupporterTalkScreen() {
 
         {messages.map((bubble, index) => (
           <View key={index}>
+            {/* Colour and alignment told these apart and nothing else. */}
             <View
               style={[
                 styles.bubble,
                 bubble.role === 'user' ? styles.bubbleUser : styles.bubbleAssistant,
                 bubble.emergency ? styles.bubbleEmergency : null,
               ]}
+              accessibilityLabel={`${t(
+                bubble.role === 'user' ? 'coach.fromYou' : 'near.fromCompanion',
+              )}: ${bubble.content}`}
             >
               <Text style={styles.body}>{bubble.content}</Text>
             </View>
@@ -145,12 +149,14 @@ export default function SupporterTalkScreen() {
           style={[styles.input, { minHeight: 90 }]}
           value={draft}
           onChangeText={setDraft}
+          accessibilityLabel={t('near.talkInputLabel')}
           placeholder={t('near.talkPlaceholder')}
           placeholderTextColor={colors.textFaint}
           multiline
         />
         <TouchableOpacity
           style={[styles.button, styles.buttonPrimary]}
+          accessibilityRole="button"
           onPress={() => void send()}
           disabled={busy || !draft.trim()}
         >

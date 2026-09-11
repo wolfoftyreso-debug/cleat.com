@@ -732,6 +732,17 @@ export const sv = {
   'coach.placeholder': 'Skriv vad som händer…',
   'coach.send': 'Skicka',
   'coach.thinking': 'Tänker…',
+  /*
+   * Vem som säger vad.
+   *
+   * Bubblorna skiljdes åt med färg och placering och ingenting annat, så en
+   * uppläst konversation var en vägg av text där man inte kunde höra skillnad
+   * på sina egna ord och coachens.
+   */
+  'coach.inputLabel': 'Skriv ett meddelande till coachen',
+  'coach.fromYou': 'Du',
+  'coach.fromCoach': 'Coach',
+  'coach.conversationLabel': 'Samtalet med coachen',
   'coach.offline':
     'Jag är inte riktigt uppkopplad just nu, men jag är ändå här hos dig och alla verktygen funkar. Vill du att vi går igenom tiominuterna tillsammans?',
   'coach.greeting.day_zero': 'Du har börjat — vet du hur stort det är? Jag är så glad att du är här. Vi tar bara de närmaste tio minuterna, tillsammans.',
@@ -1026,6 +1037,9 @@ export const sv = {
     'Ett samtal om din situation, inte hens. Du kan skriva rakt ut: att du är trött, att du är arg, att du funderar på att lämna, att du inte känner igen dig själv längre.',
   'near.talkGreeting': 'Vad är det som är tyngst just nu — för dig, alltså?',
   'near.talkPlaceholder': 'Skriv vad som händer hos dig…',
+  'near.talkInputLabel': 'Skriv ett meddelande',
+  'near.talkConversationLabel': 'Samtalet',
+  'near.fromCompanion': 'Bollplank',
   'near.talkNotAboutThem':
     'Jag vet ingenting om personen du beskriver, och jag har ingen kontakt med hens konto. Jag kan bara utgå från det du berättar.',
   'near.talkNoAdviceOnLeaving':

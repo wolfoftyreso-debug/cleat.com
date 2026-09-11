@@ -140,7 +140,7 @@ export function TwoFactor() {
           <p className="muted">
             {t('auth.totpCodesLeft', { count: status.recoveryCodesRemaining })}
           </p>
-          {error ? <div className="error-banner">{error}</div> : null}
+          {error ? <div className="error-banner" role="alert">{error}</div> : null}
           {/* The password, not just a session: otherwise a borrowed access
               token could take the second factor off and then use the account
               freely, which would make it protection that any attacker who
@@ -169,7 +169,7 @@ export function TwoFactor() {
           <p>
             <code className="totp-secret">{setup.secret}</code>
           </p>
-          {error ? <div className="error-banner">{error}</div> : null}
+          {error ? <div className="error-banner" role="alert">{error}</div> : null}
           <div className="field">
             <label htmlFor="totp-code">{t('auth.totpCode')}</label>
             <input
@@ -190,7 +190,7 @@ export function TwoFactor() {
       ) : (
         <div className="card">
           <p>{t('auth.totpOffBody')}</p>
-          {error ? <div className="error-banner">{error}</div> : null}
+          {error ? <div className="error-banner" role="alert">{error}</div> : null}
           <button className="btn wide" onClick={() => void begin()} disabled={busy}>
             {t('auth.totpEnable')}
           </button>

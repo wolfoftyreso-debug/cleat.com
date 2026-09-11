@@ -69,7 +69,7 @@ export default function TriggersPage() {
 
   return (
     <Shell title={t('trigger.title')}>
-      {error ? <div className="error-banner">{error}</div> : null}
+      {error ? <div className="error-banner" role="alert">{error}</div> : null}
       <p className="lede">{view?.intro ?? t('trigger.intro')}</p>
 
       {view?.triggers.length ? (

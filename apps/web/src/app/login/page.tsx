@@ -97,7 +97,7 @@ export default function LoginPage() {
         <div className="spacer" />
 
         <form onSubmit={(e) => { e.preventDefault(); void submitCode(e); }} className="card">
-          {error ? <div className="error-banner">{error}</div> : null}
+          {error ? <div className="error-banner" role="alert">{error}</div> : null}
           <div className="field">
             <label htmlFor="code">{t('auth.totpCode')}</label>
             <input
@@ -151,7 +151,7 @@ export default function LoginPage() {
       <div className="spacer" />
 
       <form onSubmit={(e) => { e.preventDefault(); void submit(e); }} className="card">
-        {error ? <div className="error-banner">{error}</div> : null}
+        {error ? <div className="error-banner" role="alert">{error}</div> : null}
 
         {mode === 'signUp' ? (
           <div className="field">

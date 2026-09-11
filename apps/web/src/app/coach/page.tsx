@@ -68,7 +68,14 @@ export default function CoachPage() {
         <p className="lede">{t('coach.greeting.default')}</p>
       ) : null}
 
-      <div className="chat">
+      {/*
+        role="log" — a running transcript that is added to. It is polite by
+        default, which is what a conversation wants: the coach's reply is
+        announced when there is a gap, rather than interrupting whatever is
+        being read. Before this the reply simply appeared and nothing was said
+        about it at all.
+      */}
+      <div className="chat" role="log" aria-label={t('coach.conversationLabel')}>
         {messages.map((bubble, index) => (
           <div key={index}>
             <div
@@ -76,11 +83,18 @@ export default function CoachPage() {
               data-role={bubble.role}
               data-emergency={bubble.emergency ? 'true' : 'false'}
             >
+              {/* Who is speaking. The bubbles were told apart by colour and
+                  which side they sat on, so read aloud the whole conversation
+                  was one voice and there was no way to tell your own words
+                  from the coach's. */}
+              <span className="visually-hidden">
+                {t(bubble.role === 'user' ? 'coach.fromYou' : 'coach.fromCoach')}:{' '}
+              </span>
               {bubble.content}
             </div>
             {bubble.resources?.length ? (
               <div className="card warning" style={{ marginTop: 10 }}>
-                <h3>{t('safety.resourcesTitle')}</h3>
+                <h2>{t('safety.resourcesTitle')}</h2>
                 {bubble.resources.map((resource) => (
                   <div className="resource" key={resource.key}>
                     <span>{resource.label}</span>
@@ -102,13 +116,25 @@ export default function CoachPage() {
             ) : null}
           </div>
         ))}
-        {busy ? <div className="bubble" data-role="assistant">{t('coach.thinking')}</div> : null}
+        {busy ? (
+          <div className="bubble" data-role="assistant">
+            <span className="visually-hidden">{t('coach.fromCoach')}: </span>
+            {t('coach.thinking')}
+          </div>
+        ) : null}
         <div ref={endRef} />
       </div>
 
       <form onSubmit={(e) => { e.preventDefault(); void send(e); }}>
         <div className="field">
+          {/* A placeholder is not a label. It goes away the moment somebody
+              starts typing, and it is not reliably announced as the control's
+              name — which left the most-used input in the product nameless. */}
+          <label className="visually-hidden" htmlFor="coach-message">
+            {t('coach.inputLabel')}
+          </label>
           <textarea
+            id="coach-message"
             value={draft}
             onChange={(event) => setDraft(event.target.value)}
             placeholder={t('coach.placeholder')}

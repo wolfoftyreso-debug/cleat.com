@@ -74,12 +74,19 @@ export default function CoachScreen() {
 
         {messages.map((bubble, index) => (
           <View key={index} style={{ gap: 8 }}>
+            {/* Who is speaking. The bubbles were told apart by colour and
+                which side they sat on, so read aloud the conversation was one
+                undifferentiated voice and there was no telling your own words
+                from the coach's. */}
             <View
               style={[
                 styles.bubble,
                 bubble.role === 'user' ? styles.bubbleUser : styles.bubbleAssistant,
                 bubble.emergency ? styles.bubbleEmergency : null,
               ]}
+              accessibilityLabel={`${t(
+                bubble.role === 'user' ? 'coach.fromYou' : 'coach.fromCoach',
+              )}: ${bubble.content}`}
             >
               <Text style={styles.body}>{bubble.content}</Text>
             </View>
@@ -119,16 +126,20 @@ export default function CoachScreen() {
       </ScrollView>
 
       <View style={{ padding: 16, gap: 10, borderTopWidth: 1, borderTopColor: colors.border }}>
+        {/* A placeholder is not a name: it disappears the moment somebody
+            starts typing, which left the most-used input in the app nameless. */}
         <TextInput
           style={[styles.input, { minHeight: 60 }]}
           value={draft}
           onChangeText={setDraft}
+          accessibilityLabel={t('coach.inputLabel')}
           placeholder={t('coach.placeholder')}
           placeholderTextColor={colors.textFaint}
           multiline
         />
         <TouchableOpacity
           style={[styles.button, styles.buttonPrimary]}
+          accessibilityRole="button"
           onPress={() => void send()}
           disabled={busy || !draft.trim()}
         >

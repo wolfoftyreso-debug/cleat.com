@@ -110,7 +110,7 @@ export default function PlanPage() {
 
   return (
     <Shell title={t('nav.plan')}>
-      {error ? <div className="error-banner">{error}</div> : null}
+      {error ? <div className="error-banner" role="alert">{error}</div> : null}
       {!data?.quit ? (
         <>
           <h2>{t('onboarding.pickSubstance')}</h2>
@@ -220,7 +220,12 @@ export default function PlanPage() {
         <p className="muted">{t('why.questions.who')}</p>
         <p className="muted">{t('why.questions.year')}</p>
         <div className="field" style={{ marginTop: 12 }}>
+          {/* Named by the section heading it belongs to. The three prompting
+              questions above it are context, not a label, and the placeholder
+              vanishes the moment somebody answers them. */}
           <textarea
+            id="why-statement"
+            aria-labelledby="why"
             value={why}
             onChange={(event) => setWhy(event.target.value)}
             placeholder={t('why.prompt')}
