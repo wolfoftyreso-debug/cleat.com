@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Loading, Shell } from '../../components/Shell';
+import { describeFailure } from '../../lib/action';
 import { api, type Dashboard, type Indicator } from '../../lib/api';
 import { useRequireAuth } from '../../lib/session';
 
@@ -25,16 +26,29 @@ function IndicatorRow({ indicator }: { indicator: Indicator }) {
 export default function PatternsPage() {
   const { user, loading, t } = useRequireAuth();
   const [data, setData] = useState<Dashboard | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
-    void api.get<Dashboard>('/v1/dashboard').then(setData).catch(() => undefined);
+    // Swallowed, this rendered an empty card — indistinguishable from having
+     // no patterns yet, which is a thing this screen legitimately says. "We
+     // could not load it" and "there is nothing here" are different sentences
+     // and the person is entitled to know which one they are being told.
+    void api
+      .get<Dashboard>('/v1/dashboard')
+      .then(setData)
+      .catch((caught: unknown) => setLoadError(describeFailure(t, caught)));
   }, [user]);
 
   if (loading || !user) return <Loading />;
 
   return (
     <Shell title={t('indicator.title')}>
+      {loadError ? (
+        <div className="error-banner" role="alert">
+          {loadError}
+        </div>
+      ) : null}
       {/* Stated on the page itself, not just in the design doc: there is no
           composite score, and that is a product decision rather than an
           unfinished feature. */}

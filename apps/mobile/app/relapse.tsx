@@ -1,6 +1,12 @@
 import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import {
+  RELAPSE_AUTOPSY_QUESTIONS,
+  RELAPSE_CONTINUITY_KEY,
+  RELAPSE_OPENING_KEY,
+  RELAPSE_SAFETY_QUESTIONS,
+} from '@cleat/core';
 import { useAction } from '../src/action';
 import { api } from '../src/api';
 import { useSession } from '../src/session';
@@ -34,7 +40,6 @@ interface RelapseResult {
 export default function RelapseScreen() {
   const { t } = useSession();
   const router = useRouter();
-  const [questions, setQuestions] = useState<Questions | null>(null);
   const [stage, setStage] = useState<'safety' | 'autopsy' | 'done'>('safety');
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [result, setResult] = useState<RelapseResult | null>(null);
@@ -45,17 +50,32 @@ export default function RelapseScreen() {
    */
   const { busy, error, run } = useAction(t);
 
-  useEffect(() => {
-    void api.get<Questions>('/v1/relapse/questions').then(setQuestions).catch(() => undefined);
-  }, []);
-
-  if (!questions) {
-    return (
-      <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-        <Text style={styles.muted}>{t('common.loading')}</Text>
-      </ScrollView>
-    );
-  }
+  /*
+   * Built here, not fetched.
+   *
+   * These came from GET /v1/relapse/questions, whose failure was swallowed —
+   * and the screen returned early on `!questions`, so a request that never came
+   * back left somebody who had just relapsed looking at "Loading…" forever.
+   * No error, no retry, no way forward: the safety questions and the route to
+   * the emergency numbers are both inside the markup that never rendered.
+   *
+   * The endpoint was a pure function of locale over two constants from
+   * @cleat/core and the shared catalogue, all of which ship in this app. The
+   * round trip bought nothing and could only fail.
+   */
+  const questions: Questions = useMemo(
+    () => ({
+      opening: t(RELAPSE_OPENING_KEY),
+      continuity: t(RELAPSE_CONTINUITY_KEY),
+      safety: RELAPSE_SAFETY_QUESTIONS.map((key) => ({ key, text: t(key) })),
+      autopsy: RELAPSE_AUTOPSY_QUESTIONS.map((q) => ({
+        field: q.field,
+        key: q.key,
+        text: t(q.key),
+      })),
+    }),
+    [t],
+  );
 
   async function submit() {
     setResult(await api.post<RelapseResult>('/v1/relapse', { autopsy: answers }));

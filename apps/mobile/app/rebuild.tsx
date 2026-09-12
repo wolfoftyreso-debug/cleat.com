@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { describeFailure } from '../src/action';
 import { api } from '../src/api';
 import { useSession } from '../src/session';
 import { styles } from '../src/theme';
@@ -41,13 +42,17 @@ export default function RebuildScreen() {
   const [view, setView] = useState<RebuildView | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
 
+  const [loadError, setLoadError] = useState<string | null>(null);
+
   const load = useCallback(async () => {
     try {
       setView(await api.get<RebuildView>('/v1/rebuild'));
-    } catch {
+      setLoadError(null);
+    } catch (caught) {
       setView(null);
+      setLoadError(describeFailure(t, caught));
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     void load();
@@ -65,6 +70,13 @@ export default function RebuildScreen() {
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+      {loadError ? (
+        <View style={styles.errorBanner}>
+          <Text style={styles.errorText} accessibilityRole="alert">
+            {loadError}
+          </Text>
+        </View>
+      ) : null}
       <Text style={styles.h1} accessibilityRole="header">{t('rebuild.title')}</Text>
       <Text style={styles.body}>{view?.intro ?? t('rebuild.intro')}</Text>
 

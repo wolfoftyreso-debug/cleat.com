@@ -11,7 +11,7 @@ import {
 import { Loading, Shell } from '../../components/Shell';
 import { api, type Dashboard } from '../../lib/api';
 import { useRequireAuth } from '../../lib/session';
-import { useAction } from '../../lib/action';
+import { describeFailure, useAction } from '../../lib/action';
 
 const SUBSTANCES = [
   'alcohol',
@@ -50,6 +50,7 @@ export default function PlanPage() {
   /** Nicotine only. Unanswered is allowed and means "the safe subset". */
   const [intakeForm, setIntakeForm] = useState<IntakeForm | null>(null);
   const [detoxMessage, setDetoxMessage] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const { busy, error, run } = useAction(t);
 
   async function reload() {
@@ -61,7 +62,10 @@ export default function PlanPage() {
 
   useEffect(() => {
     if (!user) return;
-    void reload().catch(() => undefined);
+    // Swallowed, a failed load showed the create-a-plan form with its defaults
+    // — so somebody who already has a plan was shown the screen for not having
+    // one, and the obvious next thing to do was make a second.
+    void reload().catch((caught: unknown) => setLoadError(describeFailure(t, caught)));
   }, [user]);
 
   const basis = costBasisFor(substance, intakeForm);
@@ -111,6 +115,11 @@ export default function PlanPage() {
   return (
     <Shell title={t('nav.plan')}>
       {error ? <div className="error-banner" role="alert">{error}</div> : null}
+      {loadError ? (
+        <div className="error-banner" role="alert">
+          {loadError}
+        </div>
+      ) : null}
       {!data?.quit ? (
         <>
           <h2>{t('onboarding.pickSubstance')}</h2>

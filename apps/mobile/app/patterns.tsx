@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
+import { describeFailure } from '../src/action';
 import { api, type Dashboard } from '../src/api';
 import { useSession } from '../src/session';
 import { colors, styles } from '../src/theme';
@@ -13,13 +14,26 @@ import { colors, styles } from '../src/theme';
 export default function PatternsScreen() {
   const { t } = useSession();
   const [data, setData] = useState<Dashboard | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
-    void api.get<Dashboard>('/v1/dashboard').then(setData).catch(() => undefined);
-  }, []);
+    // Swallowed, this rendered as though there were no patterns yet — which is
+    // a real state this screen has, and not this one.
+    void api
+      .get<Dashboard>('/v1/dashboard')
+      .then(setData)
+      .catch((caught: unknown) => setLoadError(describeFailure(t, caught)));
+  }, [t]);
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+      {loadError ? (
+        <View style={styles.errorBanner}>
+          <Text style={styles.errorText} accessibilityRole="alert">
+            {loadError}
+          </Text>
+        </View>
+      ) : null}
       <Text style={styles.h1} accessibilityRole="header">{t('indicator.title')}</Text>
       <Text style={styles.body}>{t('indicator.explainer')}</Text>
 

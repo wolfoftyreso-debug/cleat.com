@@ -1,6 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useMemo, useState } from 'react';
+import {
+  RELAPSE_AUTOPSY_QUESTIONS,
+  RELAPSE_CONTINUITY_KEY,
+  RELAPSE_OPENING_KEY,
+  RELAPSE_SAFETY_QUESTIONS,
+} from '@cleat/core';
 import { Loading, Shell } from '../../components/Shell';
 import { api } from '../../lib/api';
 import { useRequireAuth } from '../../lib/session';
@@ -33,18 +39,42 @@ interface RelapseResult {
  */
 export default function RelapsePage() {
   const { user, loading, t } = useRequireAuth();
-  const [questions, setQuestions] = useState<Questions | null>(null);
   const [stage, setStage] = useState<'safety' | 'autopsy' | 'done'>('safety');
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [result, setResult] = useState<RelapseResult | null>(null);
   const { busy, error, run } = useAction(t);
 
-  useEffect(() => {
-    if (!user) return;
-    void api.get<Questions>('/v1/relapse/questions').then(setQuestions).catch(() => undefined);
-  }, [user]);
+  /*
+   * Built here, not fetched.
+   *
+   * These questions used to come from GET /v1/relapse/questions, whose failure
+   * was swallowed — and the screen was gated on `!questions`, so a request that
+   * never came back left somebody who had just relapsed looking at the word
+   * "Loading…" forever. Not an error, not a retry, and no way forward: the
+   * safety gate and the button to the emergency numbers are both inside the
+   * markup that never rendered.
+   *
+   * The endpoint was a pure function of the person's locale over two constants
+   * from @cleat/core and the shared catalogue — every one of which is already
+   * in this bundle. So the round trip bought nothing and could only fail. This
+   * screen now works with the API down, which is the right property for the one
+   * somebody opens immediately after the worst night they have had in a while.
+   */
+  const questions: Questions = useMemo(
+    () => ({
+      opening: t(RELAPSE_OPENING_KEY),
+      continuity: t(RELAPSE_CONTINUITY_KEY),
+      safety: RELAPSE_SAFETY_QUESTIONS.map((key) => ({ key, text: t(key) })),
+      autopsy: RELAPSE_AUTOPSY_QUESTIONS.map((q) => ({
+        field: q.field,
+        key: q.key,
+        text: t(q.key),
+      })),
+    }),
+    [t],
+  );
 
-  if (loading || !user || !questions) return <Loading />;
+  if (loading || !user) return <Loading />;
 
   async function submit() {
     setResult(await api.post<RelapseResult>('/v1/relapse', { autopsy: answers }));

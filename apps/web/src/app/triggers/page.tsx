@@ -2,9 +2,9 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { Loading, Shell } from '../../components/Shell';
+import { describeFailure, useAction } from '../../lib/action';
 import { api } from '../../lib/api';
 import { useRequireAuth } from '../../lib/session';
-import { useAction } from '../../lib/action';
 
 type ChainKey = 'thought' | 'feeling' | 'impulse' | 'action' | 'consequence';
 
@@ -34,6 +34,7 @@ const CHAIN: ChainKey[] = ['thought', 'feeling', 'impulse', 'action', 'consequen
 export default function TriggersPage() {
   const { user, loading, t } = useRequireAuth();
   const [view, setView] = useState<TriggerView | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [label, setLabel] = useState('');
   const [chain, setChain] = useState<Partial<Record<ChainKey, string>>>({});
   const { busy, error, run } = useAction(t);
@@ -41,10 +42,15 @@ export default function TriggersPage() {
   const load = useCallback(async () => {
     try {
       setView(await api.get<TriggerView>('/v1/triggers'));
-    } catch {
+      setLoadError(null);
+    } catch (caught) {
+      // `setView(null)` on its own rendered the screen as though the person had
+      // mapped no triggers at all. That is a real state this screen has, and it
+      // is not this one.
       setView(null);
+      setLoadError(describeFailure(t, caught));
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     if (user) void load();
@@ -70,6 +76,11 @@ export default function TriggersPage() {
   return (
     <Shell title={t('trigger.title')}>
       {error ? <div className="error-banner" role="alert">{error}</div> : null}
+      {loadError ? (
+        <div className="error-banner" role="alert">
+          {loadError}
+        </div>
+      ) : null}
       <p className="lede">{view?.intro ?? t('trigger.intro')}</p>
 
       {view?.triggers.length ? (

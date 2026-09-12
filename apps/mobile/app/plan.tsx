@@ -7,7 +7,7 @@ import {
   type IntakeForm,
   type SubstanceKind,
 } from '@cleat/core';
-import { useAction } from '../src/action';
+import { describeFailure, useAction } from '../src/action';
 import { api, type Dashboard } from '../src/api';
 import { useSession } from '../src/session';
 import { colors, styles } from '../src/theme';
@@ -41,6 +41,7 @@ export default function PlanScreen() {
   const [data, setData] = useState<Dashboard | null>(null);
   const [why, setWhy] = useState('');
   const { busy, error, run } = useAction(t);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [substance, setSubstance] = useState<SubstanceKind>('alcohol');
   const [unitsPerDay, setUnitsPerDay] = useState('6');
@@ -56,10 +57,15 @@ export default function PlanScreen() {
       const dashboard = await api.get<Dashboard>('/v1/dashboard');
       setData(dashboard);
       setWhy(dashboard.profile.whyStatement ?? '');
-    } catch {
+      setLoadError(null);
+    } catch (caught) {
+      // A failed load showed the create-a-plan form with its defaults, so
+      // somebody who already had a plan was shown the screen for not having
+      // one — and the obvious next move was to make a second.
       setData(null);
+      setLoadError(describeFailure(t, caught));
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     void load();
@@ -95,6 +101,13 @@ export default function PlanScreen() {
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+      {loadError ? (
+        <View style={styles.errorBanner}>
+          <Text style={styles.errorText} accessibilityRole="alert">
+            {loadError}
+          </Text>
+        </View>
+      ) : null}
       {error ? (
         <View style={styles.errorBanner}>
           <Text style={styles.errorText} accessibilityRole="alert">

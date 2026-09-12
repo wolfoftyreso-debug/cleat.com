@@ -34,6 +34,8 @@ export default function StrugglingScreen() {
   const [reply, setReply] = useState<CoachResponse | null>(null);
   const [data, setData] = useState<Dashboard | null>(null);
   const [busy, setBusy] = useState(false);
+  /** Set when the coach could not be reached at all. Not a coach answer. */
+  const [offlineNote, setOfflineNote] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -45,6 +47,7 @@ export default function StrugglingScreen() {
 
   async function pick(option: string) {
     setState(option);
+    setOfflineNote(null);
     setBusy(true);
     try {
       // The client declares the mode. It knows more than any classifier: this
@@ -57,7 +60,17 @@ export default function StrugglingScreen() {
         }),
       );
     } catch {
+      // This was `setReply(null)`: the person pressed "I'm struggling", the
+      // request failed, and the place where the coach's answer should have been
+      // simply stayed empty with nothing to say the coach had been asked at
+      // all. Silence is the one response this screen must never give.
+      //
+      // Held separately rather than faked into a CoachResponse: that type
+      // carries a safety assessment, and none was made — nothing reached the
+      // server. Writing level: 'none' would be the app claiming it had read
+      // what this person said and found nothing concerning.
       setReply(null);
+      setOfflineNote(t('coach.offline'));
     } finally {
       setBusy(false);
     }
@@ -89,6 +102,14 @@ export default function StrugglingScreen() {
       {reply ? (
         <View style={[styles.card, styles.cardAccent]}>
           <Text style={styles.lede}>{reply.reply}</Text>
+        </View>
+      ) : null}
+
+      {offlineNote ? (
+        <View style={[styles.card, styles.cardAccent]}>
+          <Text style={styles.lede} accessibilityLiveRegion="polite">
+            {offlineNote}
+          </Text>
         </View>
       ) : null}
 

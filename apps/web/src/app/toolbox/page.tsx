@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Loading, Shell } from '../../components/Shell';
+import { describeFailure } from '../../lib/action';
 import { api } from '../../lib/api';
 import { useRequireAuth } from '../../lib/session';
 
@@ -28,6 +29,7 @@ const ORDER: Tool['category'][] = ['acute', 'cognitive', 'behavioural', 'social'
 export default function ToolboxPage() {
   const { user, loading, t } = useRequireAuth();
   const [tools, setTools] = useState<Tool[]>([]);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [onlyQuick, setOnlyQuick] = useState(false);
 
   useEffect(() => {
@@ -35,7 +37,10 @@ export default function ToolboxPage() {
     void api
       .get<{ tools: Tool[] }>('/v1/toolbox')
       .then((response) => setTools(response.tools))
-      .catch(() => setTools([]));
+      // Not `setTools([])`. This screen is the list of things that help, and
+      // emptying it on a failed request tells somebody who came here looking
+      // for one that they have none.
+      .catch((caught: unknown) => setLoadError(describeFailure(t, caught)));
   }, [user]);
 
   if (loading || !user) return <Loading />;
@@ -44,6 +49,11 @@ export default function ToolboxPage() {
 
   return (
     <Shell title={t('toolbox.title')}>
+      {loadError ? (
+        <div className="error-banner" role="alert">
+          {loadError}
+        </div>
+      ) : null}
       <div className="chips" style={{ marginBottom: 18 }}>
         <button className="chip" data-selected={!onlyQuick} onClick={() => setOnlyQuick(false)}>
           {t('toolbox.all')}

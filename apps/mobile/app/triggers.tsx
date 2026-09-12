@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { ApiError, api } from '../src/api';
+import { describeFailure } from '../src/action';
+import { api } from '../src/api';
 import { useSession } from '../src/session';
 import { colors, styles } from '../src/theme';
 
@@ -37,13 +38,19 @@ export default function TriggersScreen() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
+  const [loadError, setLoadError] = useState<string | null>(null);
+
   const load = useCallback(async () => {
     try {
       setView(await api.get<TriggerView>('/v1/triggers'));
-    } catch {
+      setLoadError(null);
+    } catch (caught) {
+      // `setView(null)` alone rendered the screen as though the person had
+      // mapped no triggers at all.
       setView(null);
+      setLoadError(describeFailure(t, caught));
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     if (user) void load();
@@ -62,7 +69,9 @@ export default function TriggersScreen() {
       setChain({});
       await load();
     } catch (caught) {
-      setError(caught instanceof ApiError ? t('common.error') : t('common.errorOffline'));
+      // The shared helper draws the distinctions this did not: rate-limited,
+      // unavailable and signed-out each need their own sentence.
+      setError(describeFailure(t, caught));
     } finally {
       setBusy(false);
     }
@@ -75,7 +84,9 @@ export default function TriggersScreen() {
       await api.del(`/v1/triggers/${id}`);
       await load();
     } catch (caught) {
-      setError(caught instanceof ApiError ? t('common.error') : t('common.errorOffline'));
+      // The shared helper draws the distinctions this did not: rate-limited,
+      // unavailable and signed-out each need their own sentence.
+      setError(describeFailure(t, caught));
     } finally {
       setBusy(false);
     }
@@ -83,6 +94,13 @@ export default function TriggersScreen() {
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+      {loadError ? (
+        <View style={styles.errorBanner}>
+          <Text style={styles.errorText} accessibilityRole="alert">
+            {loadError}
+          </Text>
+        </View>
+      ) : null}
       <Text style={styles.h1} accessibilityRole="header">{t('trigger.title')}</Text>
       {error ? (
         <View style={styles.errorBanner}>

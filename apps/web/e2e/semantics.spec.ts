@@ -309,3 +309,62 @@ test.describe('the other writes that were being lost', () => {
     expectNoConsoleErrors(errors, [/Failed to load resource/, /net::ERR_FAILED/, /ERR_FAILED/]);
   });
 });
+
+test.describe('a screen that cannot load says so', () => {
+  /**
+   * The worst of this class. The relapse questions came from the API, the
+   * failure was swallowed, and the screen was gated on having them — so a
+   * request that never came back left somebody who had just relapsed looking
+   * at the word "Loading…" indefinitely. No error, no retry, and no way
+   * forward: the safety questions and the route to the emergency numbers were
+   * both inside markup that never rendered.
+   *
+   * The endpoint was a pure function of locale over constants already in the
+   * bundle, so it is gone. This screen now works with the API unreachable.
+   */
+  test('the relapse screen works with the API down', async ({ page }) => {
+    const errors = failOnConsoleErrors(page);
+    await signUp(page, newEmail('relapseoffline'));
+
+    await page.route('**/v1/**', (route) => route.abort('failed'));
+    await page.goto('/relapse');
+
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    // The safety gate, which is the whole reason this screen opens on it.
+    await expect(
+      page.getByRole('heading', { name: /är du säker|are you safe/i }),
+    ).toBeVisible();
+    // And the way to the emergency numbers.
+    await expect(page.locator('a[href="/craving"]')).toBeVisible();
+
+    expectNoConsoleErrors(errors, [/Failed to load resource/, /net::ERR_FAILED/, /ERR_FAILED/]);
+  });
+
+  test('an empty toolbox says whether it failed or is simply empty', async ({ page }) => {
+    const errors = failOnConsoleErrors(page);
+    await signUp(page, newEmail('toolboxfail'));
+
+    await page.route('**/v1/toolbox', (route) => route.abort('failed'));
+    await page.goto('/toolbox');
+
+    // This screen is the list of things that help. Emptying it on a failed
+    // request tells somebody who came looking for one that they have none.
+    const banner = page.locator('.error-banner');
+    await expect(banner).toBeVisible();
+    await expect(banner).toHaveAttribute('role', 'alert');
+
+    expectNoConsoleErrors(errors, [/Failed to load resource/, /net::ERR_FAILED/, /ERR_FAILED/]);
+  });
+
+  test('a failed patterns load is not shown as having no patterns', async ({ page }) => {
+    const errors = failOnConsoleErrors(page);
+    await signUp(page, newEmail('patternsfail'));
+
+    await page.route('**/v1/dashboard', (route) => route.abort('failed'));
+    await page.goto('/patterns');
+
+    await expect(page.locator('.error-banner')).toBeVisible();
+
+    expectNoConsoleErrors(errors, [/Failed to load resource/, /net::ERR_FAILED/, /ERR_FAILED/]);
+  });
+});
