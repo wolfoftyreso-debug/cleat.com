@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { Loading, Shell } from '../../components/Shell';
+import { describeFailure } from '../../lib/action';
 import { api } from '../../lib/api';
 import { useRequireAuth } from '../../lib/session';
 
@@ -39,6 +40,7 @@ export default function RebuildPage() {
   const { user, loading, t } = useRequireAuth();
   const [view, setView] = useState<RebuildView | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -56,9 +58,16 @@ export default function RebuildPage() {
 
   async function setStatus(domain: string, status: Status) {
     setBusy(domain);
+    setError(null);
     try {
       await api.put(`/v1/rebuild/${domain}`, { status });
       await load();
+    } catch (caught) {
+      // try/finally with no catch: marking a part of your life as one you are
+      // working on rejected with nobody listening, the chip stopped spinning,
+      // and it stayed exactly as it was. The next thing somebody does after
+      // that is press it again.
+      setError(describeFailure(t, caught));
     } finally {
       setBusy(null);
     }
@@ -72,6 +81,11 @@ export default function RebuildPage() {
 
   return (
     <Shell title={t('rebuild.title')}>
+      {error ? (
+        <div className="error-banner" role="alert">
+          {error}
+        </div>
+      ) : null}
       <p className="lede">{view?.intro ?? t('rebuild.intro')}</p>
 
       {view?.suggestion ? (

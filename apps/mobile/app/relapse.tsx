@@ -1,6 +1,7 @@
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { useAction } from '../src/action';
 import { api } from '../src/api';
 import { useSession } from '../src/session';
 import { colors, styles } from '../src/theme';
@@ -37,7 +38,12 @@ export default function RelapseScreen() {
   const [stage, setStage] = useState<'safety' | 'autopsy' | 'done'>('safety');
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [result, setResult] = useState<RelapseResult | null>(null);
-  const [busy, setBusy] = useState(false);
+  /*
+   * The most costly place in the app to lose a write: this is somebody's own
+   * account of the hardest thing that has happened to them this month, and
+   * they do not get a second run at writing it.
+   */
+  const { busy, error, run } = useAction(t);
 
   useEffect(() => {
     void api.get<Questions>('/v1/relapse/questions').then(setQuestions).catch(() => undefined);
@@ -52,17 +58,19 @@ export default function RelapseScreen() {
   }
 
   async function submit() {
-    setBusy(true);
-    try {
-      setResult(await api.post<RelapseResult>('/v1/relapse', { autopsy: answers }));
-      setStage('done');
-    } finally {
-      setBusy(false);
-    }
+    setResult(await api.post<RelapseResult>('/v1/relapse', { autopsy: answers }));
+    setStage('done');
   }
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+      {error ? (
+        <View style={styles.errorBanner}>
+          <Text style={styles.errorText} accessibilityRole="alert">
+            {error}
+          </Text>
+        </View>
+      ) : null}
       <View style={[styles.card, styles.cardAccent]}>
         <Text style={styles.lede}>{questions.opening}</Text>
         <Text style={styles.body}>{questions.continuity}</Text>
@@ -116,7 +124,7 @@ export default function RelapseScreen() {
           ))}
           <TouchableOpacity
             style={[styles.button, styles.buttonPrimary]}
-            onPress={() => void submit()}
+            onPress={run(submit)}
             disabled={busy}
           >
             <Text style={[styles.buttonText, styles.buttonTextPrimary]}>{t('action.save')}</Text>

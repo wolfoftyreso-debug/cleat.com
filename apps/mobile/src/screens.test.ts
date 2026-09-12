@@ -99,3 +99,37 @@ describe('headings are headings', () => {
     }
   });
 });
+
+describe('a write that fails says so', () => {
+  it('no screen writes inside a try/finally with no catch', () => {
+    /*
+     * The shape that lost four writes in this app: `try { await api.post(…) }
+     * finally { setBusy(false) }`. It looks careful and is not — the promise
+     * rejects with nobody listening, the spinner stops, and the screen goes
+     * back to looking exactly as it did with everything the person wrote still
+     * on it and nothing to say none of it saved.
+     *
+     * Matched on the shape rather than the behaviour, because there is no
+     * device here to observe the behaviour on. A screen that writes must
+     * either catch, or hand the write to the shared action helper.
+     */
+    for (const name of screens) {
+      const source = read(name);
+      if (!/api\.(post|put|patch|delete)/.test(source)) continue;
+      const guarded = source.includes('} catch') || source.includes('useAction');
+      expect(guarded, `${name} writes with nothing catching the failure`).toBe(true);
+    }
+  });
+
+  it('a screen that uses the action helper shows what it reports', () => {
+    // An error the helper sets and the screen never renders is the same
+    // silence with extra steps.
+    for (const name of screens) {
+      const source = read(name);
+      if (!source.includes('useAction')) continue;
+      expect(source, `${name} takes an error from useAction and never renders it`).toMatch(
+        /\{error \?/,
+      );
+    }
+  });
+});

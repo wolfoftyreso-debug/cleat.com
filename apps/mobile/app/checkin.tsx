@@ -1,6 +1,7 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { useAction } from '../src/action';
 import { api } from '../src/api';
 import { useSession } from '../src/session';
 import { colors, styles } from '../src/theme';
@@ -50,37 +51,44 @@ export default function CheckInScreen() {
   const [cravingIntensity, setCravingIntensity] = useState(2);
   const [text, setText] = useState('');
   const [saved, setSaved] = useState(false);
-  const [busy, setBusy] = useState(false);
+  /*
+   * try/finally with no catch. A failed check-in rejected with nobody
+   * listening, the button stopped spinning, and the screen went back to
+   * looking exactly as it had — with everything just written still on it.
+   */
+  const { busy, error, run } = useAction(t);
 
   async function save() {
-    setBusy(true);
-    try {
-      const now = new Date();
-      // The device's local day, not the server's UTC one — otherwise an evening
-      // check-in east of Greenwich lands on tomorrow.
-      const day = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(
-        now.getDate(),
-      ).padStart(2, '0')}`;
+    const now = new Date();
+    // The device's local day, not the server's UTC one — otherwise an evening
+    // check-in east of Greenwich lands on tomorrow.
+    const day = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(
+      now.getDate(),
+    ).padStart(2, '0')}`;
 
-      await api.post('/v1/checkins', {
-        kind,
-        day,
-        mood,
-        sleepQuality,
-        stress,
-        cravingIntensity,
-        biggestRisk: kind === 'morning' ? text : null,
-        wentWell: kind === 'evening' ? text : null,
-      });
-      setSaved(true);
-      setTimeout(() => router.back(), 700);
-    } finally {
-      setBusy(false);
-    }
+    await api.post('/v1/checkins', {
+      kind,
+      day,
+      mood,
+      sleepQuality,
+      stress,
+      cravingIntensity,
+      biggestRisk: kind === 'morning' ? text : null,
+      wentWell: kind === 'evening' ? text : null,
+    });
+    setSaved(true);
+    setTimeout(() => router.back(), 700);
   }
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+      {error ? (
+        <View style={styles.errorBanner}>
+          <Text style={styles.errorText} accessibilityRole="alert">
+            {error}
+          </Text>
+        </View>
+      ) : null}
       <Text style={styles.h1} accessibilityRole="header">
         {t(kind === 'morning' ? 'checkin.morning.title' : 'checkin.evening.title')}
       </Text>
@@ -126,7 +134,7 @@ export default function CheckInScreen() {
 
       <TouchableOpacity
         style={[styles.button, styles.buttonPrimary]}
-        onPress={() => void save()}
+        onPress={run(save)}
         disabled={busy}
       >
         <Text style={[styles.buttonText, styles.buttonTextPrimary]}>

@@ -270,3 +270,42 @@ test.describe('a save that fails says so', () => {
     expectNoConsoleErrors(errors);
   });
 });
+
+test.describe('the other writes that were being lost', () => {
+  test('a failed rebuild status is reported, not swallowed', async ({ page }) => {
+    const errors = failOnConsoleErrors(page);
+    await signUp(page, newEmail('rebuildfail'));
+    await page.goto('/rebuild');
+
+    await page.route('**/v1/rebuild/**', (route) => route.abort('failed'));
+    await page.locator('button.chip, .card button').first().click();
+
+    const banner = page.locator('.error-banner');
+    await expect(banner).toBeVisible();
+    await expect(banner).toHaveAttribute('role', 'alert');
+
+    expectNoConsoleErrors(errors, [/Failed to load resource/, /net::ERR_FAILED/, /ERR_FAILED/]);
+  });
+
+  /**
+   * The screen for the hour before the craving, reached by pressing "I'm
+   * struggling". Its catch set the reply to null, so a failed request left the
+   * place where the coach's answer should have been simply empty, with nothing
+   * to say the coach had been asked at all. Silence is the one response this
+   * screen must never give.
+   */
+  test('an unreachable coach on the struggling screen still answers', async ({ page }) => {
+    const errors = failOnConsoleErrors(page);
+    await signUp(page, newEmail('strugglefail'));
+    await page.goto('/struggling');
+
+    await page.route('**/v1/coach/message', (route) => route.abort('failed'));
+    await page.getByRole('button', { name: /stress/i }).first().click();
+
+    await expect(page.getByRole('status')).toBeVisible();
+    // And the three cheapest things are still there, as they always were.
+    await expect(page.getByRole('heading', { level: 2 }).first()).toBeVisible();
+
+    expectNoConsoleErrors(errors, [/Failed to load resource/, /net::ERR_FAILED/, /ERR_FAILED/]);
+  });
+});

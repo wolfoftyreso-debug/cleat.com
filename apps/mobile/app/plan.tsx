@@ -7,6 +7,7 @@ import {
   type IntakeForm,
   type SubstanceKind,
 } from '@cleat/core';
+import { useAction } from '../src/action';
 import { api, type Dashboard } from '../src/api';
 import { useSession } from '../src/session';
 import { colors, styles } from '../src/theme';
@@ -39,7 +40,7 @@ export default function PlanScreen() {
   const { t } = useSession();
   const [data, setData] = useState<Dashboard | null>(null);
   const [why, setWhy] = useState('');
-  const [busy, setBusy] = useState(false);
+  const { busy, error, run } = useAction(t);
   const [saved, setSaved] = useState(false);
   const [substance, setSubstance] = useState<SubstanceKind>('alcohol');
   const [unitsPerDay, setUnitsPerDay] = useState('6');
@@ -65,37 +66,27 @@ export default function PlanScreen() {
   }, [load]);
 
   async function createPlan() {
-    setBusy(true);
-    try {
-      const size = Math.max(1, Number(purchaseSize) || 1);
-      const response = await api.post<{
-        detoxWarning: { required: boolean; message?: string };
-      }>('/v1/quit', {
-        substance,
-        baselineUnitsPerDay: Number(unitsPerDay) || 0,
-        // Minor units all the way, so nothing rounds oddly.
-        unitCostMinor: Math.round((Number(purchaseCost) * 100 || 0) / size),
-        currency: 'SEK',
-        ...(substance === 'nicotine' && intakeForm ? { intakeForm } : {}),
-      });
-      setDetoxMessage(
-        response.detoxWarning.required ? response.detoxWarning.message ?? null : null,
-      );
-      await load();
-    } finally {
-      setBusy(false);
-    }
+    const size = Math.max(1, Number(purchaseSize) || 1);
+    const response = await api.post<{
+      detoxWarning: { required: boolean; message?: string };
+    }>('/v1/quit', {
+      substance,
+      baselineUnitsPerDay: Number(unitsPerDay) || 0,
+      // Minor units all the way, so nothing rounds oddly.
+      unitCostMinor: Math.round((Number(purchaseCost) * 100 || 0) / size),
+      currency: 'SEK',
+      ...(substance === 'nicotine' && intakeForm ? { intakeForm } : {}),
+    });
+    setDetoxMessage(
+      response.detoxWarning.required ? response.detoxWarning.message ?? null : null,
+    );
+    await load();
   }
 
   async function save() {
-    setBusy(true);
-    try {
-      await api.put('/v1/me/profile', { whyStatement: why });
-      setSaved(true);
-      await load();
-    } finally {
-      setBusy(false);
-    }
+    await api.put('/v1/me/profile', { whyStatement: why });
+    setSaved(true);
+    await load();
   }
 
   const basis = costBasisFor(substance, intakeForm);
@@ -104,6 +95,13 @@ export default function PlanScreen() {
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+      {error ? (
+        <View style={styles.errorBanner}>
+          <Text style={styles.errorText} accessibilityRole="alert">
+            {error}
+          </Text>
+        </View>
+      ) : null}
       <Text style={styles.h1} accessibilityRole="header">{t('mode.path')}</Text>
 
       {data?.phase ? (
@@ -220,7 +218,7 @@ export default function PlanScreen() {
 
             <TouchableOpacity
               style={[styles.button, styles.buttonPrimary]}
-              onPress={() => void createPlan()}
+              onPress={run(createPlan)}
               disabled={busy}
             >
               <Text style={[styles.buttonText, styles.buttonTextPrimary]}>
@@ -254,7 +252,7 @@ export default function PlanScreen() {
         />
         <TouchableOpacity
           style={[styles.button, styles.buttonPrimary]}
-          onPress={() => void save()}
+          onPress={run(save)}
           disabled={busy}
         >
           <Text style={[styles.buttonText, styles.buttonTextPrimary]}>

@@ -38,6 +38,25 @@ const MESSAGES: Record<string, string> = {
   unauthorized: 'common.errorSignedOut',
 };
 
+/**
+ * Turn whatever was thrown into something worth showing somebody.
+ *
+ * Exported because not every screen fits `run`. Two of them track which
+ * *thing* is busy rather than whether anything is, and one wants to keep
+ * going with a fallback rather than stop and show a banner — but all of them
+ * owe the person the same distinction between "this will work if you try
+ * again" and "this will not".
+ */
+export function describeFailure(t: (key: string) => string, caught: unknown): string {
+  if (caught instanceof ApiError) {
+    const key = MESSAGES[caught.code];
+    return key ? t(key) : t('common.error');
+  }
+  // Not an ApiError: the request never reached us. On a phone that is usually
+  // signal rather than a fault.
+  return t('common.errorOffline');
+}
+
 export function useAction(t: (key: string) => string): Action {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -47,17 +66,7 @@ export function useAction(t: (key: string) => string): Action {
       setBusy(true);
       setError(null);
       operation()
-        .catch((caught: unknown) => {
-          if (caught instanceof ApiError) {
-            const key = MESSAGES[caught.code];
-            setError(key ? t(key) : t('common.error'));
-          } else {
-            // Not an ApiError: the request never reached us. On a phone that is
-            // usually signal rather than a fault, and saying so is the
-            // difference between "try again in a moment" and "this is broken".
-            setError(t('common.errorOffline'));
-          }
-        })
+        .catch((caught: unknown) => setError(describeFailure(t, caught)))
         .finally(() => setBusy(false));
     },
     [t],

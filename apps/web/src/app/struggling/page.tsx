@@ -32,6 +32,8 @@ export default function StrugglingPage() {
   const { user, loading, t } = useRequireAuth();
   const [state, setState] = useState<string | null>(null);
   const [reply, setReply] = useState<CoachResponse | null>(null);
+  /** Set when the coach could not be reached at all. Not a coach answer. */
+  const [offlineNote, setOfflineNote] = useState<string | null>(null);
   const [data, setData] = useState<Dashboard | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -44,6 +46,7 @@ export default function StrugglingPage() {
 
   async function pick(option: string) {
     setState(option);
+    setOfflineNote(null);
     setBusy(true);
     try {
       // The client declares the mode. It knows more than any classifier: this
@@ -56,7 +59,23 @@ export default function StrugglingPage() {
         }),
       );
     } catch {
+      // This used to be `setReply(null)`: the person pressed "I'm struggling",
+      // the request failed, and the place where the coach's answer should have
+      // been simply stayed empty with nothing to say why. Silence is the one
+      // response this screen must never give — it is reached by somebody who
+      // has just reported that they are losing their footing.
+      //
+      // The three cheapest things below still render, and always did. What was
+      // missing was any acknowledgement that the coach had been asked at all.
+      // These are the same words the coach itself falls back on.
+      //
+      // Held separately rather than faked into a CoachResponse: that type
+      // carries a safety assessment, and no assessment was made here. Writing
+      // `level: 'none'` into it would be the app claiming it had looked at
+      // what this person said and found nothing concerning, which is not what
+      // happened — nothing reached the server at all.
       setReply(null);
+      setOfflineNote(t('coach.offline'));
     } finally {
       setBusy(false);
     }
@@ -89,6 +108,12 @@ export default function StrugglingPage() {
           <p className="lede" style={{ whiteSpace: 'pre-wrap' }}>
             {reply.reply}
           </p>
+        </div>
+      ) : null}
+
+      {offlineNote ? (
+        <div className="card accent" role="status">
+          <p className="lede">{offlineNote}</p>
         </div>
       ) : null}
 
